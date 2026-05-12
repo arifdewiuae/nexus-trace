@@ -7,6 +7,7 @@ import {
   SEARCH_RETRY_DELAY_MS,
   SEARCH_RECENCY_DAYS,
 } from "@/lib/config"
+import { withRetry } from "@/lib/retry"
 
 function getTavilyClient() {
   const apiKey = process.env.TAVILY_API_KEY
@@ -14,29 +15,20 @@ function getTavilyClient() {
   return tavily({ apiKey })
 }
 
-async function withRetry<T>(fn: () => Promise<T>, retries = SEARCH_MAX_RETRIES): Promise<T> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await fn()
-    } catch (err) {
-      if (attempt === retries) throw err
-      await new Promise((r) => setTimeout(r, SEARCH_RETRY_DELAY_MS * attempt))
-    }
-  }
-  throw new Error("Unreachable")
-}
-
 export const webSearch = tool(
   async ({ query }) => {
     try {
       const client = getTavilyClient()
-      const response = await withRetry(() =>
-        client.search(query, {
-          maxResults: SEARCH_MAX_RESULTS,
-          searchDepth: "basic",
-          includeAnswer: true,
-          days: SEARCH_RECENCY_DAYS,
-        })
+      const response = await withRetry(
+        () =>
+          client.search(query, {
+            maxResults: SEARCH_MAX_RESULTS,
+            searchDepth: "basic",
+            includeAnswer: true,
+            days: SEARCH_RECENCY_DAYS,
+          }),
+        SEARCH_MAX_RETRIES,
+        SEARCH_RETRY_DELAY_MS
       )
 
       if (!response.results?.length) {

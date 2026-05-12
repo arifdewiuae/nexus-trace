@@ -3,12 +3,13 @@ import { createAgent } from "langchain"
 import { HumanMessage } from "@langchain/core/messages"
 import { allTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
-import { type StreamEvent, encodeEvent } from "@/lib/streaming/types"
+import { type StreamEvent, STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
 import {
   FIREWORKS_BASE_URL,
   DEFAULT_MODEL,
   AGENT_TEMPERATURE,
   AGENT_MAX_TOKENS,
+  GRAPH_EVENTS,
 } from "@/lib/config"
 
 function createModel() {
@@ -51,19 +52,19 @@ export async function* runAgentStream(
   for await (const event of eventStream) {
     const { event: eventName, name, data } = event
 
-    if (eventName === "on_chat_model_stream") {
+    if (eventName === GRAPH_EVENTS.CHAT_MODEL_STREAM) {
       const chunk = data?.chunk
       const content = chunk?.content
       if (typeof content === "string" && content.length > 0) {
-        const e: StreamEvent = { type: "token_delta", content }
+        const e: StreamEvent = { type: STREAM_EVENT.TOKEN_DELTA, content }
         yield encodeEvent(e)
       }
     }
 
-    if (eventName === "on_tool_start") {
+    if (eventName === GRAPH_EVENTS.TOOL_START) {
       activeToolCallId = event.run_id ?? `tool-${stepIndex}`
       const e: StreamEvent = {
-        type: "tool_start",
+        type: STREAM_EVENT.TOOL_START,
         toolName: name ?? "unknown",
         toolCallId: activeToolCallId,
         args: data?.input ?? {},
@@ -71,10 +72,10 @@ export async function* runAgentStream(
       yield encodeEvent(e)
     }
 
-    if (eventName === "on_tool_end") {
+    if (eventName === GRAPH_EVENTS.TOOL_END) {
       const toolCallId = event.run_id ?? activeToolCallId ?? `tool-${stepIndex}`
       const e: StreamEvent = {
-        type: "tool_result",
+        type: STREAM_EVENT.TOOL_RESULT,
         toolName: name ?? "unknown",
         toolCallId,
         result: data?.output ?? null,
@@ -82,16 +83,14 @@ export async function* runAgentStream(
       }
       yield encodeEvent(e)
       stepIndex++
-      const stepE: StreamEvent = { type: "step_end", stepIndex }
-      yield encodeEvent(stepE)
+      yield encodeEvent({ type: STREAM_EVENT.STEP_END, stepIndex })
       activeToolCallId = null
     }
   }
 
-  const doneE: StreamEvent = {
-    type: "done",
+  yield encodeEvent({
+    type: STREAM_EVENT.DONE,
     totalSteps: stepIndex,
     latencyMs: Date.now() - startTime,
-  }
-  yield encodeEvent(doneE)
+  })
 }

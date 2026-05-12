@@ -41,7 +41,7 @@ export function SplitLayout({ chat, trace, isStreaming, hasTrace }: Props) {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
+                  "flex flex-1 cursor-pointer items-center justify-center gap-2 py-3 text-sm font-medium transition-colors",
                   isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >

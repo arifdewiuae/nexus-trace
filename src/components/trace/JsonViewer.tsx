@@ -17,7 +17,7 @@ export function JsonViewer({ label, data, defaultOpen = false }: Props) {
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1 text-left text-sm transition-colors"
+        className="text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center gap-1 text-left text-sm transition-colors"
       >
         {open ? (
           <ChevronDown className="h-3 w-3 shrink-0" />

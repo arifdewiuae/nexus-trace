@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai"
 import { createAgent } from "langchain"
-import { HumanMessage } from "@langchain/core/messages"
+import { AIMessage, HumanMessage } from "@langchain/core/messages"
 import { allTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
 import { type StreamEvent, STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
@@ -46,18 +46,25 @@ function extractToolResult(output: unknown): unknown {
   return output
 }
 
-export async function* runAgentStream(userMessage: string): AsyncGenerator<string> {
+export async function* runAgentStream(
+  userMessage: string,
+  history: { role: string; content: string }[] = []
+): AsyncGenerator<string> {
   const graph = createAgentGraph()
   const startTime = Date.now()
   let stepIndex = 0
   const toolStartTimes = new Map<string, number>()
   const modelStartTimes = new Map<string, number>()
 
+  const historyMessages = history.map((m) =>
+    m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
+  )
+
   // Each tool call is ~2 graph steps; +2 for entry/exit LLM calls
   const recursionLimit = AGENT_MAX_ITERATIONS * 2 + 2
 
   const eventStream = graph.streamEvents(
-    { messages: [new HumanMessage(userMessage)] },
+    { messages: [...historyMessages, new HumanMessage(userMessage)] },
     { version: "v2", recursionLimit }
   )
 

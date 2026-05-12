@@ -18,7 +18,7 @@ export function Header({ onClear, canClear }: Props) {
           disabled={!canClear}
           title="Clear conversation"
           className={cn(
-            "text-muted-foreground hover:text-foreground ml-3 rounded-md p-1.5 transition-colors",
+            "text-muted-foreground hover:text-foreground ml-3 cursor-pointer rounded-md p-1.5 transition-colors",
             "disabled:pointer-events-none disabled:opacity-30"
           )}
         >

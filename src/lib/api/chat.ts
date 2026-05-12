@@ -1,8 +1,14 @@
-export async function streamChat(content: string, signal: AbortSignal): Promise<Response> {
+export type HistoryMessage = { role: "user" | "assistant"; content: string }
+
+export async function streamChat(
+  content: string,
+  history: HistoryMessage[],
+  signal: AbortSignal
+): Promise<Response> {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: content }),
+    body: JSON.stringify({ message: content, history }),
     signal,
   })
 

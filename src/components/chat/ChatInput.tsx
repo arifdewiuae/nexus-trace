@@ -52,7 +52,7 @@ export function ChatInput({ onSend, onStop, isStreaming }: Props) {
           onClick={isStreaming ? onStop : handleSend}
           disabled={!isStreaming && !value.trim()}
           className={cn(
-            "shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30",
+            "shrink-0 cursor-pointer rounded-lg p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed",
             isStreaming
               ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed"

@@ -32,7 +32,7 @@ export function MessageList({ messages, onPromptSelect }: Props) {
             <button
               key={prompt}
               onClick={() => onPromptSelect(prompt)}
-              className="text-muted-foreground border-border hover:bg-muted hover:text-foreground rounded-xl border px-3 py-2.5 text-left text-sm transition-colors"
+              className="text-muted-foreground border-border hover:bg-muted hover:text-foreground cursor-pointer rounded-xl border px-3 py-2.5 text-left text-sm transition-colors"
             >
               {prompt}
             </button>

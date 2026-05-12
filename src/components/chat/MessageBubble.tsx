@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import type { Message } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -33,7 +34,7 @@ export function MessageBubble({ message }: Props) {
               prose-table:text-sm prose-th:font-semibold prose-td:py-1
               prose-hr:border-border"
           >
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
           </div>
         )}
         {message.isStreaming && (

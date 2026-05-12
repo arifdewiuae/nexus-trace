@@ -15,10 +15,12 @@ const SSE_HEADERS: HeadersInit = {
 
 export async function POST(req: NextRequest) {
   let message: string
+  let history: { role: string; content: string }[] = []
 
   try {
     const body = await req.json()
     message = body?.message
+    history = Array.isArray(body?.history) ? body.history : []
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 })
   }
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const stream = generatorToStream(runAgentStream(message.trim()), (err) => {
+  const stream = generatorToStream(runAgentStream(message.trim(), history), (err) => {
     const msg = err instanceof Error ? err.message : "Internal server error"
     return encodeEvent({ type: STREAM_EVENT.ERROR, message: msg })
   })

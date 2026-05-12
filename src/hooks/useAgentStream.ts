@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Message, TraceStep } from "@/lib/types"
+import type { HistoryMessage } from "@/lib/api/chat"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { STREAM_EVENT, type StreamEvent } from "@/lib/streaming/types"
 import { parseSSE } from "@/lib/streaming/utils"
@@ -25,6 +26,10 @@ export function useAgentStream() {
   const [totalLatencyMs, setTotalLatencyMs] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const messagesRef = useRef<Message[]>(messages)
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
 
   // Restore from sessionStorage after mount to avoid SSR/client mismatch
   useEffect(() => {
@@ -134,6 +139,10 @@ export function useAgentStream() {
 
       const assistantId = crypto.randomUUID()
 
+      const history: HistoryMessage[] = messagesRef.current
+        .filter((m) => !m.isStreaming && m.content.trim())
+        .map((m) => ({ role: m.role, content: m.content }))
+
       setMessages((prev) => [
         ...prev,
         { id: crypto.randomUUID(), role: "user", content },
@@ -145,7 +154,7 @@ export function useAgentStream() {
       setError(null)
 
       try {
-        const res = await streamChat(content, abort.signal)
+        const res = await streamChat(content, history, abort.signal)
 
         for await (const event of parseSSE(res)) {
           if (abort.signal.aborted) break

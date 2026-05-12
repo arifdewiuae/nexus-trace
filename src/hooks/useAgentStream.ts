@@ -185,6 +185,8 @@ export function useAgentStream() {
     setTotalLatencyMs(null)
   }, [])
 
+  const clearError = useCallback(() => setError(null), [])
+
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort()
   }, [])
@@ -197,6 +199,7 @@ export function useAgentStream() {
     error,
     sendMessage,
     clearMessages,
+    clearError,
     stopStreaming,
   }
 }

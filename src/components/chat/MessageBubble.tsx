@@ -12,14 +12,19 @@ export function MessageBubble({ message }: Props) {
     <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-4 py-3 text-base leading-relaxed",
+          "max-w-[82%] rounded-2xl px-4 py-3 text-base leading-relaxed",
           isUser
             ? "bg-primary text-primary-foreground rounded-br-sm"
             : "bg-muted text-foreground rounded-bl-sm"
         )}
       >
         {isUser ? (
-          <span>{message.content}</span>
+          <span>
+            {message.content}
+            {message.isStreaming && (
+              <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
+            )}
+          </span>
         ) : (
           <div
             className="prose prose-invert prose-sm max-w-none
@@ -34,11 +39,22 @@ export function MessageBubble({ message }: Props) {
               prose-table:text-sm prose-th:font-semibold prose-td:py-1
               prose-hr:border-border"
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                table: ({ children }) => (
+                  <div className="overflow-x-auto">
+                    <table>{children}</table>
+                  </div>
+                ),
+              }}
+            >
+              {message.content + (message.isStreaming ? "​" : "")}
+            </ReactMarkdown>
+            {message.isStreaming && (
+              <span className="inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
+            )}
           </div>
-        )}
-        {message.isStreaming && (
-          <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle" />
         )}
       </div>
     </div>

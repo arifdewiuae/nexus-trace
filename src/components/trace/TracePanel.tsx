@@ -41,9 +41,19 @@ export function TracePanel({ steps, isStreaming, totalLatencyMs }: Props) {
       {/* Steps */}
       {steps.length === 0 ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground text-sm">
-            {isStreaming ? "Waiting for tool calls…" : "Run a query to see the agent trace"}
-          </p>
+          {isStreaming ? (
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="bg-muted-foreground/40 h-1.5 w-1.5 rounded-full"
+                  style={{ animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">Run a query to see the agent trace</p>
+          )}
         </div>
       ) : (
         <div className="flex-1 space-y-2 overflow-y-auto p-3">

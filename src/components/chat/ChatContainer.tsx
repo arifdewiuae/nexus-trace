@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/Header"
 import { TracePanel } from "@/components/trace/TracePanel"
 import { MessageList } from "./MessageList"
 import { ChatInput } from "./ChatInput"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, X } from "lucide-react"
 
 export function ChatContainer() {
   const {
@@ -17,6 +17,7 @@ export function ChatContainer() {
     error,
     sendMessage,
     clearMessages,
+    clearError,
     stopStreaming,
   } = useAgentStream()
 
@@ -28,9 +29,15 @@ export function ChatContainer() {
           chat={
             <div className="flex h-full flex-col">
               {error && (
-                <div className="border-destructive/30 bg-destructive/10 text-destructive mx-4 mt-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  {error}
+                <div className="border-destructive/30 bg-destructive/10 text-destructive mx-4 mt-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span className="flex-1">{error}</span>
+                  <button
+                    onClick={clearError}
+                    className="hover:text-destructive/70 cursor-pointer transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               )}
               <MessageList messages={messages} onPromptSelect={sendMessage} />

@@ -23,7 +23,7 @@ export function MessageList({ messages, onPromptSelect }: Props) {
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <Zap className="text-muted-foreground h-8 w-8" />
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-base">
             Ask anything — the agent will search the web and show you every step.
           </p>
         </div>
@@ -32,7 +32,7 @@ export function MessageList({ messages, onPromptSelect }: Props) {
             <button
               key={prompt}
               onClick={() => onPromptSelect(prompt)}
-              className="text-muted-foreground border-border hover:bg-muted hover:text-foreground rounded-xl border px-3 py-2 text-left text-xs transition-colors"
+              className="text-muted-foreground border-border hover:bg-muted hover:text-foreground rounded-xl border px-3 py-2.5 text-left text-sm transition-colors"
             >
               {prompt}
             </button>

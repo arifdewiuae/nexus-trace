@@ -1,14 +1,22 @@
 export const FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
-export const DEFAULT_MODEL = "accounts/fireworks/models/qwen3p5-72b-instruct"
-export const AGENT_TEMPERATURE = 0.6
-export const AGENT_MAX_TOKENS = 4096
+export const DEFAULT_MODEL = "accounts/fireworks/models/gpt-oss-120b"
+export const AGENT_TEMPERATURE = 0.3
+export const AGENT_MAX_TOKENS = 2048
 
-export const SEARCH_MAX_RESULTS = 5
+export const SEARCH_MAX_RESULTS = 3
 export const SEARCH_MAX_RETRIES = 3
 export const SEARCH_RETRY_DELAY_MS = 500
+export const SEARCH_RECENCY_DAYS = 90
+
+export const AGENT_MAX_ITERATIONS = 4
+
+export const STORAGE_KEY_MESSAGES = "nexus-trace:messages"
+export const STORAGE_KEY_TRACE_STEPS = "nexus-trace:trace-steps"
 
 export const GRAPH_EVENTS = {
+  CHAT_MODEL_START: "on_chat_model_start",
   CHAT_MODEL_STREAM: "on_chat_model_stream",
+  CHAT_MODEL_END: "on_chat_model_end",
   TOOL_START: "on_tool_start",
   TOOL_END: "on_tool_end",
 } as const

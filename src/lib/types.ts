@@ -15,10 +15,23 @@ export const TRACE_STATUS = {
 
 export type TraceStepStatus = (typeof TRACE_STATUS)[keyof typeof TRACE_STATUS]
 
+export const STEP_TYPE = {
+  TOOL: "tool",
+  MODEL: "model",
+} as const
+
+export const MODEL_LABEL = {
+  REASONING: "Reasoning",
+  RESPONDING: "Responding",
+} as const
+
+export type StepType = (typeof STEP_TYPE)[keyof typeof STEP_TYPE]
+
 export type TraceStep = {
   id: string
+  stepType: StepType
   toolName: string
-  args: unknown
+  args?: unknown
   result?: unknown
   durationMs?: number
   status: TraceStepStatus

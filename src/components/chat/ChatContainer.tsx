@@ -9,11 +9,20 @@ import { ChatInput } from "./ChatInput"
 import { AlertCircle } from "lucide-react"
 
 export function ChatContainer() {
-  const { messages, traceSteps, isStreaming, error, sendMessage, stopStreaming } = useAgentStream()
+  const {
+    messages,
+    traceSteps,
+    isStreaming,
+    totalLatencyMs,
+    error,
+    sendMessage,
+    clearMessages,
+    stopStreaming,
+  } = useAgentStream()
 
   return (
     <div className="flex h-full flex-col">
-      <Header />
+      <Header onClear={clearMessages} canClear={messages.length > 0 && !isStreaming} />
       <div className="flex-1 overflow-hidden">
         <SplitLayout
           chat={
@@ -28,7 +37,11 @@ export function ChatContainer() {
               <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} />
             </div>
           }
-          trace={<TracePanel steps={traceSteps} isStreaming={isStreaming} />}
+          isStreaming={isStreaming}
+          hasTrace={traceSteps.length > 0}
+          trace={
+            <TracePanel steps={traceSteps} isStreaming={isStreaming} totalLatencyMs={totalLatencyMs} />
+          }
         />
       </div>
     </div>

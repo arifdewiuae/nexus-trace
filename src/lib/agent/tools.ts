@@ -1,7 +1,12 @@
 import { tool } from "@langchain/core/tools"
 import { tavily } from "@tavily/core"
 import { z } from "zod"
-import { SEARCH_MAX_RESULTS, SEARCH_MAX_RETRIES, SEARCH_RETRY_DELAY_MS } from "@/lib/config"
+import {
+  SEARCH_MAX_RESULTS,
+  SEARCH_MAX_RETRIES,
+  SEARCH_RETRY_DELAY_MS,
+  SEARCH_RECENCY_DAYS,
+} from "@/lib/config"
 
 function getTavilyClient() {
   const apiKey = process.env.TAVILY_API_KEY
@@ -30,6 +35,7 @@ export const webSearch = tool(
           maxResults: SEARCH_MAX_RESULTS,
           searchDepth: "basic",
           includeAnswer: true,
+          days: SEARCH_RECENCY_DAYS,
         })
       )
 
@@ -57,4 +63,16 @@ export const webSearch = tool(
   }
 )
 
-export const allTools = [webSearch]
+export const getCurrentDatetime = tool(
+  async () => {
+    const now = new Date()
+    return `Current date and time: ${now.toUTCString()} (UTC)`
+  },
+  {
+    name: "get_current_datetime",
+    description: "Get the current date and time. Use this when the user asks about today's date or when you need to know the current time.",
+    schema: z.object({}),
+  }
+)
+
+export const allTools = [webSearch, getCurrentDatetime]

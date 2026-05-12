@@ -4,11 +4,13 @@ import { HumanMessage } from "@langchain/core/messages"
 import { allTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
 import { type StreamEvent, STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
+import { MODEL_LABEL } from "@/lib/types"
 import {
   FIREWORKS_BASE_URL,
   DEFAULT_MODEL,
   AGENT_TEMPERATURE,
   AGENT_MAX_TOKENS,
+  AGENT_MAX_ITERATIONS,
   GRAPH_EVENTS,
 } from "@/lib/config"
 
@@ -21,6 +23,7 @@ function createModel() {
     openAIApiKey: apiKey,
     configuration: {
       baseURL: process.env.FIREWORKS_BASE_URL ?? FIREWORKS_BASE_URL,
+      apiKey,
     },
     streaming: true,
     temperature: AGENT_TEMPERATURE,
@@ -36,53 +39,87 @@ export function createAgentGraph() {
   })
 }
 
+function extractToolResult(output: unknown): unknown {
+  if (output && typeof output === "object" && "kwargs" in output) {
+    return (output as { kwargs: { content?: unknown } }).kwargs.content ?? output
+  }
+  return output
+}
+
 export async function* runAgentStream(userMessage: string): AsyncGenerator<string> {
   const graph = createAgentGraph()
   const startTime = Date.now()
   let stepIndex = 0
-  let activeToolCallId: string | null = null
+  const toolStartTimes = new Map<string, number>()
+  const modelStartTimes = new Map<string, number>()
+
+  // Each tool call is ~2 graph steps; +2 for entry/exit LLM calls
+  const recursionLimit = AGENT_MAX_ITERATIONS * 2 + 2
 
   const eventStream = graph.streamEvents(
     { messages: [new HumanMessage(userMessage)] },
-    { version: "v2" }
+    { version: "v2", recursionLimit }
   )
+
+  // Tracks which model calls produced visible text tokens (= "Responding" vs "Reasoning")
+  const modelHasTokens = new Set<string>()
 
   for await (const event of eventStream) {
     const { event: eventName, name, data } = event
+    const runId: string = event.run_id ?? `run-${stepIndex}`
+
+    if (eventName === GRAPH_EVENTS.CHAT_MODEL_START) {
+      modelStartTimes.set(runId, Date.now())
+      yield encodeEvent({ type: STREAM_EVENT.MODEL_START, modelCallId: runId, label: MODEL_LABEL.REASONING })
+    }
 
     if (eventName === GRAPH_EVENTS.CHAT_MODEL_STREAM) {
       const chunk = data?.chunk
       const content = chunk?.content
-      if (typeof content === "string" && content.length > 0) {
-        const e: StreamEvent = { type: STREAM_EVENT.TOKEN_DELTA, content }
-        yield encodeEvent(e)
+      const toolCallChunks: unknown[] = chunk?.tool_call_chunks ?? []
+      if (typeof content === "string" && content.length > 0 && toolCallChunks.length === 0) {
+        if (!modelHasTokens.has(runId)) {
+          modelHasTokens.add(runId)
+          // Relabel this step now that we know it's producing the final answer
+          yield encodeEvent({
+            type: STREAM_EVENT.MODEL_START,
+            modelCallId: runId,
+            label: MODEL_LABEL.RESPONDING,
+          })
+        }
+        yield encodeEvent({ type: STREAM_EVENT.TOKEN_DELTA, content })
       }
+    }
+
+    if (eventName === GRAPH_EVENTS.CHAT_MODEL_END) {
+      const durationMs = Date.now() - (modelStartTimes.get(runId) ?? Date.now())
+      modelStartTimes.delete(runId)
+      modelHasTokens.delete(runId)
+      yield encodeEvent({ type: STREAM_EVENT.MODEL_END, modelCallId: runId, durationMs })
     }
 
     if (eventName === GRAPH_EVENTS.TOOL_START) {
-      activeToolCallId = event.run_id ?? `tool-${stepIndex}`
-      const e: StreamEvent = {
+      toolStartTimes.set(runId, Date.now())
+      yield encodeEvent({
         type: STREAM_EVENT.TOOL_START,
         toolName: name ?? "unknown",
-        toolCallId: activeToolCallId,
+        toolCallId: runId,
         args: data?.input ?? {},
-      }
-      yield encodeEvent(e)
+      })
     }
 
     if (eventName === GRAPH_EVENTS.TOOL_END) {
-      const toolCallId = event.run_id ?? activeToolCallId ?? `tool-${stepIndex}`
-      const e: StreamEvent = {
+      const durationMs = Date.now() - (toolStartTimes.get(runId) ?? Date.now())
+      toolStartTimes.delete(runId)
+      yield encodeEvent({
         type: STREAM_EVENT.TOOL_RESULT,
         toolName: name ?? "unknown",
-        toolCallId,
-        result: data?.output ?? null,
-        durationMs: 0,
-      }
-      yield encodeEvent(e)
+        toolCallId: runId,
+        result: extractToolResult(data?.output),
+        durationMs,
+      })
       stepIndex++
       yield encodeEvent({ type: STREAM_EVENT.STEP_END, stepIndex })
-      activeToolCallId = null
     }
   }
 

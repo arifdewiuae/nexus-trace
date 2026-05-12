@@ -46,22 +46,22 @@ export function ChatInput({ onSend, onStop, isStreaming }: Props) {
           placeholder="Ask anything..."
           rows={1}
           disabled={isStreaming}
-          className="text-foreground placeholder:text-muted-foreground min-h-[24px] flex-1 resize-none bg-transparent py-0.5 text-sm outline-none disabled:opacity-50"
+          className="text-foreground placeholder:text-muted-foreground min-h-[28px] flex-1 resize-none bg-transparent py-0.5 text-base outline-none disabled:opacity-50"
         />
         <button
           onClick={isStreaming ? onStop : handleSend}
           disabled={!isStreaming && !value.trim()}
           className={cn(
-            "shrink-0 rounded-lg p-1.5 transition-colors disabled:opacity-30",
+            "shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30",
             isStreaming
               ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed"
           )}
         >
-          {isStreaming ? <Square className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
+          {isStreaming ? <Square className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
         </button>
       </div>
-      <p className="text-muted-foreground/60 mt-1.5 text-center text-[10px]">
+      <p className="text-muted-foreground/60 mt-1.5 text-center text-xs">
         Enter to send · Shift+Enter for newline
       </p>
     </div>

@@ -2,28 +2,57 @@ import { tool } from "@langchain/core/tools"
 import { tavily } from "@tavily/core"
 import { z } from "zod"
 
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 500
+
 function getTavilyClient() {
   const apiKey = process.env.TAVILY_API_KEY
   if (!apiKey) throw new Error("TAVILY_API_KEY is not set")
   return tavily({ apiKey })
 }
 
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries = MAX_RETRIES
+): Promise<T> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (attempt === retries) throw err
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt))
+    }
+  }
+  throw new Error("Unreachable")
+}
+
 export const webSearch = tool(
   async ({ query }) => {
-    const client = getTavilyClient()
-    const response = await client.search(query, {
-      maxResults: 5,
-      searchDepth: "basic",
-      includeAnswer: true,
-    })
+    try {
+      const client = getTavilyClient()
+      const response = await withRetry(() =>
+        client.search(query, {
+          maxResults: 5,
+          searchDepth: "basic",
+          includeAnswer: true,
+        })
+      )
 
-    const snippets = response.results
-      .map((r) => `**${r.title}**\n${r.url}\n${r.content}`)
-      .join("\n\n")
+      if (!response.results?.length) {
+        return `No results found for: "${query}". Try rephrasing the query.`
+      }
 
-    return response.answer
-      ? `${response.answer}\n\nSources:\n${snippets}`
-      : snippets
+      const snippets = response.results
+        .map((r) => `**${r.title}**\n${r.url}\n${r.content}`)
+        .join("\n\n")
+
+      return response.answer
+        ? `${response.answer}\n\nSources:\n${snippets}`
+        : snippets
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return `Search failed after ${MAX_RETRIES} attempts: ${message}. Please try a different approach.`
+    }
   },
   {
     name: "web_search",

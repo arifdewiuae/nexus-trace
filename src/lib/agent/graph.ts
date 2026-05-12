@@ -1,31 +1,37 @@
 import { ChatOpenAI } from "@langchain/openai"
-import { createReactAgent } from "@langchain/langgraph/prebuilt"
+import { createAgent } from "langchain"
 import { HumanMessage } from "@langchain/core/messages"
 import { allTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
 import { type StreamEvent, encodeEvent } from "@/lib/streaming/types"
+import {
+  FIREWORKS_BASE_URL,
+  DEFAULT_MODEL,
+  AGENT_TEMPERATURE,
+  AGENT_MAX_TOKENS,
+} from "@/lib/config"
 
 function createModel() {
   const apiKey = process.env.FIREWORKS_API_KEY
   if (!apiKey) throw new Error("FIREWORKS_API_KEY is not set")
 
   return new ChatOpenAI({
-    modelName: "accounts/fireworks/models/qwen3p5-72b-instruct",
+    modelName: process.env.FIREWORKS_MODEL ?? DEFAULT_MODEL,
     openAIApiKey: apiKey,
     configuration: {
-      baseURL: "https://api.fireworks.ai/inference/v1",
+      baseURL: process.env.FIREWORKS_BASE_URL ?? FIREWORKS_BASE_URL,
     },
     streaming: true,
-    temperature: 0.6,
-    maxTokens: 4096,
+    temperature: AGENT_TEMPERATURE,
+    maxTokens: AGENT_MAX_TOKENS,
   })
 }
 
 export function createAgentGraph() {
-  return createReactAgent({
-    llm: createModel(),
+  return createAgent({
+    model: createModel(),
     tools: allTools,
-    prompt: AGENT_SYSTEM_PROMPT,
+    systemPrompt: AGENT_SYSTEM_PROMPT,
   })
 }
 

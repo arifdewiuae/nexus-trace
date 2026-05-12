@@ -2,12 +2,10 @@ import { Zap } from "lucide-react"
 
 export function Header() {
   return (
-    <header className="shrink-0 border-b border-border px-5 py-3 flex items-center gap-2.5">
-      <Zap className="w-4 h-4 text-primary" />
-      <span className="font-semibold tracking-tight text-sm">Nexus Trace</span>
-      <span className="ml-auto text-xs text-muted-foreground">
-        Streaming AI Agent
-      </span>
+    <header className="border-border flex shrink-0 items-center gap-2.5 border-b px-5 py-3">
+      <Zap className="text-primary h-4 w-4" />
+      <span className="text-sm font-semibold tracking-tight">Nexus Trace</span>
+      <span className="text-muted-foreground ml-auto text-xs">Streaming AI Agent</span>
     </header>
   )
 }

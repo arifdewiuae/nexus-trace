@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -6,6 +6,6 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

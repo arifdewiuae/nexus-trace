@@ -23,9 +23,7 @@ export function generatorToStream(
   })
 }
 
-export async function* parseSSE(
-  response: Response
-): AsyncGenerator<StreamEvent> {
+export async function* parseSSE(response: Response): AsyncGenerator<StreamEvent> {
   const reader = response.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ""

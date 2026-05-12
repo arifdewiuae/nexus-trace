@@ -12,7 +12,13 @@ export type StreamEventType = (typeof STREAM_EVENT)[keyof typeof STREAM_EVENT]
 export type StreamEvent =
   | { type: typeof STREAM_EVENT.TOKEN_DELTA; content: string }
   | { type: typeof STREAM_EVENT.TOOL_START; toolName: string; toolCallId: string; args: unknown }
-  | { type: typeof STREAM_EVENT.TOOL_RESULT; toolName: string; toolCallId: string; result: unknown; durationMs: number }
+  | {
+      type: typeof STREAM_EVENT.TOOL_RESULT
+      toolName: string
+      toolCallId: string
+      result: unknown
+      durationMs: number
+    }
   | { type: typeof STREAM_EVENT.STEP_END; stepIndex: number }
   | { type: typeof STREAM_EVENT.DONE; totalSteps: number; latencyMs: number }
   | { type: typeof STREAM_EVENT.ERROR; message: string }

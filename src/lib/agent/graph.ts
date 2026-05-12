@@ -36,9 +36,7 @@ export function createAgentGraph() {
   })
 }
 
-export async function* runAgentStream(
-  userMessage: string
-): AsyncGenerator<string> {
+export async function* runAgentStream(userMessage: string): AsyncGenerator<string> {
   const graph = createAgentGraph()
   const startTime = Date.now()
   let stepIndex = 0

@@ -36,8 +36,8 @@ export function ChatInput({ onSend, onStop, isStreaming }: Props) {
   }
 
   return (
-    <div className="shrink-0 border-t border-border px-4 py-3">
-      <div className="flex items-end gap-2 rounded-2xl border border-border bg-muted/50 px-3 py-2 focus-within:border-ring transition-colors">
+    <div className="border-border shrink-0 border-t px-4 py-3">
+      <div className="border-border bg-muted/50 focus-within:border-ring flex items-end gap-2 rounded-2xl border px-3 py-2 transition-colors">
         <textarea
           ref={textareaRef}
           value={value}
@@ -46,7 +46,7 @@ export function ChatInput({ onSend, onStop, isStreaming }: Props) {
           placeholder="Ask anything..."
           rows={1}
           disabled={isStreaming}
-          className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none min-h-[24px] py-0.5 disabled:opacity-50"
+          className="text-foreground placeholder:text-muted-foreground min-h-[24px] flex-1 resize-none bg-transparent py-0.5 text-sm outline-none disabled:opacity-50"
         />
         <button
           onClick={isStreaming ? onStop : handleSend}
@@ -58,14 +58,10 @@ export function ChatInput({ onSend, onStop, isStreaming }: Props) {
               : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed"
           )}
         >
-          {isStreaming ? (
-            <Square className="w-3.5 h-3.5" />
-          ) : (
-            <ArrowUp className="w-3.5 h-3.5" />
-          )}
+          {isStreaming ? <Square className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
         </button>
       </div>
-      <p className="mt-1.5 text-center text-[10px] text-muted-foreground/60">
+      <p className="text-muted-foreground/60 mt-1.5 text-center text-[10px]">
         Enter to send · Shift+Enter for newline
       </p>
     </div>

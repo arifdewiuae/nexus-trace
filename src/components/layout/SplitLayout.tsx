@@ -6,10 +6,8 @@ type SplitLayoutProps = {
 export function SplitLayout({ chat, trace }: SplitLayoutProps) {
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="flex flex-col flex-1 min-w-0">{chat}</div>
-      <div className="flex flex-col w-[420px] shrink-0 border-l border-border">
-        {trace}
-      </div>
+      <div className="flex min-w-0 flex-1 flex-col">{chat}</div>
+      <div className="border-border flex w-[420px] shrink-0 flex-col border-l">{trace}</div>
     </div>
   )
 }

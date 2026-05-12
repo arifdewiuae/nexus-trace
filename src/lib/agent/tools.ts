@@ -1,11 +1,7 @@
 import { tool } from "@langchain/core/tools"
 import { tavily } from "@tavily/core"
 import { z } from "zod"
-import {
-  SEARCH_MAX_RESULTS,
-  SEARCH_MAX_RETRIES,
-  SEARCH_RETRY_DELAY_MS,
-} from "@/lib/config"
+import { SEARCH_MAX_RESULTS, SEARCH_MAX_RETRIES, SEARCH_RETRY_DELAY_MS } from "@/lib/config"
 
 function getTavilyClient() {
   const apiKey = process.env.TAVILY_API_KEY
@@ -13,10 +9,7 @@ function getTavilyClient() {
   return tavily({ apiKey })
 }
 
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  retries = SEARCH_MAX_RETRIES
-): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, retries = SEARCH_MAX_RETRIES): Promise<T> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       return await fn()
@@ -48,9 +41,7 @@ export const webSearch = tool(
         .map((r) => `**${r.title}**\n${r.url}\n${r.content}`)
         .join("\n\n")
 
-      return response.answer
-        ? `${response.answer}\n\nSources:\n${snippets}`
-        : snippets
+      return response.answer ? `${response.answer}\n\nSources:\n${snippets}` : snippets
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       return `Search failed after ${SEARCH_MAX_RETRIES} attempts: ${message}. Please try a different approach.`

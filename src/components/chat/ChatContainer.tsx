@@ -3,6 +3,7 @@
 import { useAgentStream } from "@/hooks/useAgentStream"
 import { SplitLayout } from "@/components/layout/SplitLayout"
 import { Header } from "@/components/layout/Header"
+import { TracePanel } from "@/components/trace/TracePanel"
 import { MessageList } from "./MessageList"
 import { ChatInput } from "./ChatInput"
 import { AlertCircle } from "lucide-react"
@@ -27,15 +28,7 @@ export function ChatContainer() {
               <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} />
             </div>
           }
-          trace={
-            <div className="flex h-full flex-col items-center justify-center gap-2">
-              <p className="text-muted-foreground text-xs">
-                {traceSteps.length === 0
-                  ? "Trace steps will appear here"
-                  : `${traceSteps.length} step${traceSteps.length > 1 ? "s" : ""}`}
-              </p>
-            </div>
-          }
+          trace={<TracePanel steps={traceSteps} isStreaming={isStreaming} />}
         />
       </div>
     </div>

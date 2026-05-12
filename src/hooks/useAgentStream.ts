@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import type { Message, TraceStep } from "@/lib/types"
+import { TRACE_STATUS } from "@/lib/types"
 import { STREAM_EVENT, type StreamEvent } from "@/lib/streaming/types"
 import { parseSSE } from "@/lib/streaming/utils"
 import { streamChat } from "@/lib/api/chat"
@@ -28,7 +29,7 @@ export function useAgentStream() {
             id: event.toolCallId,
             toolName: event.toolName,
             args: event.args,
-            status: "running",
+            status: TRACE_STATUS.RUNNING,
             startedAt: Date.now(),
           },
         ])
@@ -42,7 +43,7 @@ export function useAgentStream() {
                   ...s,
                   result: event.result,
                   durationMs: event.durationMs,
-                  status: "done",
+                  status: TRACE_STATUS.DONE,
                   endedAt: Date.now(),
                 }
               : s

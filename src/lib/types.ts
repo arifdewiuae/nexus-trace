@@ -7,7 +7,13 @@ export type Message = {
   isStreaming?: boolean
 }
 
-export type TraceStepStatus = "running" | "done" | "error"
+export const TRACE_STATUS = {
+  RUNNING: "running",
+  DONE: "done",
+  ERROR: "error",
+} as const
+
+export type TraceStepStatus = (typeof TRACE_STATUS)[keyof typeof TRACE_STATUS]
 
 export type TraceStep = {
   id: string

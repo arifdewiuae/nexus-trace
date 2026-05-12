@@ -1,9 +1,11 @@
 import { tool } from "@langchain/core/tools"
 import { tavily } from "@tavily/core"
 import { z } from "zod"
-
-const MAX_RETRIES = 3
-const RETRY_DELAY_MS = 500
+import {
+  SEARCH_MAX_RESULTS,
+  SEARCH_MAX_RETRIES,
+  SEARCH_RETRY_DELAY_MS,
+} from "@/lib/config"
 
 function getTavilyClient() {
   const apiKey = process.env.TAVILY_API_KEY
@@ -13,14 +15,14 @@ function getTavilyClient() {
 
 async function withRetry<T>(
   fn: () => Promise<T>,
-  retries = MAX_RETRIES
+  retries = SEARCH_MAX_RETRIES
 ): Promise<T> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       return await fn()
     } catch (err) {
       if (attempt === retries) throw err
-      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt))
+      await new Promise((r) => setTimeout(r, SEARCH_RETRY_DELAY_MS * attempt))
     }
   }
   throw new Error("Unreachable")
@@ -32,7 +34,7 @@ export const webSearch = tool(
       const client = getTavilyClient()
       const response = await withRetry(() =>
         client.search(query, {
-          maxResults: 5,
+          maxResults: SEARCH_MAX_RESULTS,
           searchDepth: "basic",
           includeAnswer: true,
         })
@@ -51,7 +53,7 @@ export const webSearch = tool(
         : snippets
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      return `Search failed after ${MAX_RETRIES} attempts: ${message}. Please try a different approach.`
+      return `Search failed after ${SEARCH_MAX_RETRIES} attempts: ${message}. Please try a different approach.`
     }
   },
   {

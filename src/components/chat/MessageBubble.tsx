@@ -25,6 +25,16 @@ export function MessageBubble({ message }: Props) {
               <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
             )}
           </span>
+        ) : message.isStreaming && !message.content ? (
+          <div className="flex items-center gap-1 py-0.5">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="bg-muted-foreground/50 h-1.5 w-1.5 rounded-full"
+                style={{ animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}
+              />
+            ))}
+          </div>
         ) : (
           <div
             className="prose prose-invert prose-sm max-w-none

@@ -31,7 +31,8 @@ export function useApiKeys() {
     setKeysState(null)
   }, [])
 
-  const hasKeys = Boolean(keys?.fireworksKey.trim() && keys?.tavilyKey.trim())
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_KEYS_ENABLED === "true"
+  const hasKeys = isDemoMode || Boolean(keys?.fireworksKey.trim() && keys?.tavilyKey.trim())
 
   return { keys, setKeys, clearKeys, hasKeys }
 }

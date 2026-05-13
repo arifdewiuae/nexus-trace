@@ -1,3 +1,8 @@
+export type ApiKeys = {
+  fireworksKey: string
+  tavilyKey: string
+}
+
 export type MessageRole = "user" | "assistant"
 
 export type Message = {

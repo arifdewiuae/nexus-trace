@@ -1,10 +1,10 @@
 import { ChatOpenAI } from "@langchain/openai"
 import { createAgent } from "langchain"
 import { AIMessage, HumanMessage } from "@langchain/core/messages"
-import { allTools } from "./tools"
+import { createTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
 import { type StreamEvent, STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
-import { MODEL_LABEL } from "@/lib/types"
+import { MODEL_LABEL, type ApiKeys } from "@/lib/types"
 import {
   FIREWORKS_BASE_URL,
   DEFAULT_MODEL,
@@ -14,28 +14,17 @@ import {
   GRAPH_EVENTS,
 } from "@/lib/config"
 
-function createModel() {
-  const apiKey = process.env.FIREWORKS_API_KEY
-  if (!apiKey) throw new Error("FIREWORKS_API_KEY is not set")
-
+function createModel(fireworksKey: string) {
   return new ChatOpenAI({
     modelName: process.env.FIREWORKS_MODEL ?? DEFAULT_MODEL,
-    openAIApiKey: apiKey,
+    openAIApiKey: fireworksKey,
     configuration: {
       baseURL: process.env.FIREWORKS_BASE_URL ?? FIREWORKS_BASE_URL,
-      apiKey,
+      apiKey: fireworksKey,
     },
     streaming: true,
     temperature: AGENT_TEMPERATURE,
     maxTokens: AGENT_MAX_TOKENS,
-  })
-}
-
-export function createAgentGraph() {
-  return createAgent({
-    model: createModel(),
-    tools: allTools,
-    systemPrompt: AGENT_SYSTEM_PROMPT,
   })
 }
 
@@ -48,9 +37,15 @@ function extractToolResult(output: unknown): unknown {
 
 export async function* runAgentStream(
   userMessage: string,
-  history: { role: string; content: string }[] = []
+  history: { role: string; content: string }[] = [],
+  keys: ApiKeys
 ): AsyncGenerator<string> {
-  const graph = createAgentGraph()
+  const graph = createAgent({
+    model: createModel(keys.fireworksKey),
+    tools: createTools(keys.tavilyKey),
+    systemPrompt: AGENT_SYSTEM_PROMPT,
+  })
+
   const startTime = Date.now()
   let stepIndex = 0
   const toolStartTimes = new Map<string, number>()
@@ -60,15 +55,12 @@ export async function* runAgentStream(
     m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
   )
 
-  // Each tool call is ~2 graph steps; +2 for entry/exit LLM calls
   const recursionLimit = AGENT_MAX_ITERATIONS * 2 + 2
-
   const eventStream = graph.streamEvents(
     { messages: [...historyMessages, new HumanMessage(userMessage)] },
     { version: "v2", recursionLimit }
   )
 
-  // Tracks which model calls produced visible text tokens (= "Responding" vs "Reasoning")
   const modelHasTokens = new Set<string>()
 
   for await (const event of eventStream) {
@@ -87,7 +79,6 @@ export async function* runAgentStream(
       if (typeof content === "string" && content.length > 0 && toolCallChunks.length === 0) {
         if (!modelHasTokens.has(runId)) {
           modelHasTokens.add(runId)
-          // Relabel this step now that we know it's producing the final answer
           yield encodeEvent({
             type: STREAM_EVENT.MODEL_START,
             modelCallId: runId,

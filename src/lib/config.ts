@@ -12,6 +12,10 @@ export const AGENT_MAX_ITERATIONS = 4
 
 export const STORAGE_KEY_MESSAGES = "nexus-trace:messages"
 export const STORAGE_KEY_TRACE_STEPS = "nexus-trace:trace-steps"
+export const STORAGE_KEY_API_KEYS = "nexus-trace:api-keys"
+
+export const HEADER_FIREWORKS_KEY = "x-fireworks-key"
+export const HEADER_TAVILY_KEY = "x-tavily-key"
 
 export const GRAPH_EVENTS = {
   CHAT_MODEL_START: "on_chat_model_start",

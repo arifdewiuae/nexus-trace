@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server"
 import { runAgentStream } from "@/lib/agent/graph"
 import { encodeEvent, STREAM_EVENT } from "@/lib/streaming/types"
 import { generatorToStream } from "@/lib/streaming/utils"
+import type { ApiKeys } from "@/lib/types"
+import { HEADER_FIREWORKS_KEY, HEADER_TAVILY_KEY } from "@/lib/config"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -11,6 +13,20 @@ const SSE_HEADERS: HeadersInit = {
   "Cache-Control": "no-cache, no-transform",
   Connection: "keep-alive",
   "X-Accel-Buffering": "no",
+}
+
+function resolveKeys(req: NextRequest): ApiKeys | null {
+  const fireworksKey =
+    req.headers.get(HEADER_FIREWORKS_KEY) ||
+    (process.env.DEMO_KEYS_ENABLED === "true" ? (process.env.FIREWORKS_API_KEY ?? "") : "")
+
+  const tavilyKey =
+    req.headers.get(HEADER_TAVILY_KEY) ||
+    (process.env.DEMO_KEYS_ENABLED === "true" ? (process.env.TAVILY_API_KEY ?? "") : "")
+
+  if (!fireworksKey.trim() || !tavilyKey.trim()) return null
+
+  return { fireworksKey, tavilyKey }
 }
 
 export async function POST(req: NextRequest) {
@@ -32,7 +48,15 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const stream = generatorToStream(runAgentStream(message.trim(), history), (err) => {
+  const keys = resolveKeys(req)
+  if (!keys) {
+    return Response.json(
+      { error: "API keys required. Add your Fireworks and Tavily keys in Settings ⚙️" },
+      { status: 401 }
+    )
+  }
+
+  const stream = generatorToStream(runAgentStream(message.trim(), history, keys), (err) => {
     const msg = err instanceof Error ? err.message : "Internal server error"
     return encodeEvent({ type: STREAM_EVENT.ERROR, message: msg })
   })

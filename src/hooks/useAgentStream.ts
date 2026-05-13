@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { Message, TraceStep } from "@/lib/types"
+import type { Message, TraceStep, ApiKeys } from "@/lib/types"
 import type { HistoryMessage } from "@/lib/api/chat"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { STREAM_EVENT, type StreamEvent } from "@/lib/streaming/types"
@@ -19,7 +19,7 @@ function readStorage<T>(key: string, fallback: T): T {
   }
 }
 
-export function useAgentStream() {
+export function useAgentStream(apiKeys?: ApiKeys | null) {
   const [messages, setMessages] = useState<Message[]>([])
   const [traceSteps, setTraceSteps] = useState<TraceStep[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
@@ -27,9 +27,13 @@ export function useAgentStream() {
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const messagesRef = useRef<Message[]>(messages)
+  const apiKeysRef = useRef(apiKeys)
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+  useEffect(() => {
+    apiKeysRef.current = apiKeys
+  }, [apiKeys])
 
   // Restore from sessionStorage after mount to avoid SSR/client mismatch
   useEffect(() => {
@@ -154,7 +158,7 @@ export function useAgentStream() {
       setError(null)
 
       try {
-        const res = await streamChat(content, history, abort.signal)
+        const res = await streamChat(content, history, abort.signal, apiKeysRef.current ?? undefined)
 
         for await (const event of parseSSE(res)) {
           if (abort.signal.aborted) break

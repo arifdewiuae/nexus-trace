@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration"
+import { ConnectionBanner } from "@/components/pwa/ConnectionBanner"
 import "./globals.css"
 
 const inter = Inter({
@@ -31,7 +33,9 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
     >
       <body className="bg-background text-foreground h-full">
+        <ConnectionBanner />
         <TooltipProvider>{children}</TooltipProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   )

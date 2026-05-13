@@ -1,5 +1,6 @@
 "use client"
 
+import { useApiKeys } from "@/hooks/useApiKeys"
 import { useAgentStream } from "@/hooks/useAgentStream"
 import { SplitLayout } from "@/components/layout/SplitLayout"
 import { Header } from "@/components/layout/Header"
@@ -9,6 +10,8 @@ import { ChatInput } from "./ChatInput"
 import { AlertCircle, X } from "lucide-react"
 
 export function ChatContainer() {
+  const { keys, hasKeys, setKeys, clearKeys } = useApiKeys()
+
   const {
     messages,
     traceSteps,
@@ -19,11 +22,18 @@ export function ChatContainer() {
     clearMessages,
     clearError,
     stopStreaming,
-  } = useAgentStream()
+  } = useAgentStream(keys)
 
   return (
     <div className="flex h-full flex-col">
-      <Header onClear={clearMessages} canClear={messages.length > 0 && !isStreaming} />
+      <Header
+        onClear={clearMessages}
+        canClear={messages.length > 0 && !isStreaming}
+        keys={keys}
+        hasKeys={hasKeys}
+        onSaveKeys={setKeys}
+        onClearKeys={clearKeys}
+      />
       <div className="flex-1 overflow-hidden">
         <SplitLayout
           chat={
@@ -41,13 +51,22 @@ export function ChatContainer() {
                 </div>
               )}
               <MessageList messages={messages} onPromptSelect={sendMessage} />
-              <ChatInput onSend={sendMessage} onStop={stopStreaming} isStreaming={isStreaming} />
+              <ChatInput
+                onSend={sendMessage}
+                onStop={stopStreaming}
+                isStreaming={isStreaming}
+                hasKeys={hasKeys}
+              />
             </div>
           }
           isStreaming={isStreaming}
           hasTrace={traceSteps.length > 0}
           trace={
-            <TracePanel steps={traceSteps} isStreaming={isStreaming} totalLatencyMs={totalLatencyMs} />
+            <TracePanel
+              steps={traceSteps}
+              isStreaming={isStreaming}
+              totalLatencyMs={totalLatencyMs}
+            />
           }
         />
       </div>

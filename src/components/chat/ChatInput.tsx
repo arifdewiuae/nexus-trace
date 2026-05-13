@@ -8,9 +8,10 @@ type Props = {
   onSend: (message: string) => void
   onStop: () => void
   isStreaming: boolean
+  hasKeys: boolean
 }
 
-export function ChatInput({ onSend, onStop, isStreaming }: Props) {
+export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
   const [value, setValue] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -43,14 +44,14 @@ export function ChatInput({ onSend, onStop, isStreaming }: Props) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask anything..."
+          placeholder={hasKeys ? "Ask anything..." : "Add API keys in Settings ⚙️ to get started"}
           rows={1}
-          disabled={isStreaming}
+          disabled={isStreaming || !hasKeys}
           className="text-foreground placeholder:text-muted-foreground min-h-[28px] flex-1 resize-none bg-transparent py-0.5 text-base outline-none disabled:opacity-50"
         />
         <button
           onClick={isStreaming ? onStop : handleSend}
-          disabled={!isStreaming && !value.trim()}
+          disabled={!isStreaming && (!value.trim() || !hasKeys)}
           className={cn(
             "shrink-0 cursor-pointer rounded-lg p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed",
             isStreaming

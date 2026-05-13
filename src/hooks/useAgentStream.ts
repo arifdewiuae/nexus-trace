@@ -29,6 +29,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   const [traceSteps, setTraceSteps] = useState<TraceStep[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [totalLatencyMs, setTotalLatencyMs] = useState<number | null>(null)
+  const [ttftMs, setTtftMs] = useState<number | null>(null)
   const [queryUsage, setQueryUsage] = useState<TokenUsage | null>(null)
   const [queryCostUsd, setQueryCostUsd] = useState<number | null>(null)
   const [sessionUsage, setSessionUsage] = useState<TokenUsage>({ inputTokens: 0, outputTokens: 0, totalTokens: 0 })
@@ -172,6 +173,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
 
       case STREAM_EVENT.DONE:
         setTotalLatencyMs(event.latencyMs)
+        setTtftMs(event.ttftMs ?? null)
         if (event.inputTokens != null && event.outputTokens != null) {
           const usage: TokenUsage = {
             inputTokens: event.inputTokens,
@@ -229,6 +231,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
       )
       setIsStreaming(true)
       setTotalLatencyMs(null)
+      setTtftMs(null)
       setQueryUsage(null)
       setQueryCostUsd(null)
       setError(null)
@@ -265,6 +268,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     setError(null)
     setIsStreaming(false)
     setTotalLatencyMs(null)
+    setTtftMs(null)
     setQueryUsage(null)
     setQueryCostUsd(null)
     setSessionUsage({ inputTokens: 0, outputTokens: 0, totalTokens: 0 })
@@ -282,6 +286,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     traceSteps,
     isStreaming,
     totalLatencyMs,
+    ttftMs,
     queryUsage,
     queryCostUsd,
     sessionUsage,

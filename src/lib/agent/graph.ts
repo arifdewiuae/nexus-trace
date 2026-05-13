@@ -66,6 +66,7 @@ export async function* runAgentStream(
   let stepIndex = 0
   let totalInputTokens = 0
   let totalOutputTokens = 0
+  let firstTokenTime: number | null = null
   const toolStartTimes = new Map<string, number>()
   const modelStartTimes = new Map<string, number>()
 
@@ -97,6 +98,7 @@ export async function* runAgentStream(
       if (typeof content === "string" && content.length > 0 && toolCallChunks.length === 0) {
         if (!modelHasTokens.has(runId)) {
           modelHasTokens.add(runId)
+          firstTokenTime ??= Date.now()
           yield encodeEvent({
             type: STREAM_EVENT.MODEL_START,
             modelCallId: runId,
@@ -155,6 +157,7 @@ export async function* runAgentStream(
     type: STREAM_EVENT.DONE,
     totalSteps: stepIndex,
     latencyMs: Date.now() - startTime,
+    ttftMs: firstTokenTime != null ? firstTokenTime - startTime : undefined,
     inputTokens: hasUsage ? totalInputTokens : undefined,
     outputTokens: hasUsage ? totalOutputTokens : undefined,
     estimatedCostUsd,

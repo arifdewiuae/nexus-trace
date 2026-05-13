@@ -12,6 +12,7 @@ type Props = {
   steps: TraceStep[]
   isStreaming: boolean
   totalLatencyMs: number | null
+  ttftMs?: number | null
   queryUsage?: TokenUsage | null
   queryCostUsd?: number | null
   sessionUsage?: TokenUsage
@@ -22,6 +23,7 @@ export function TracePanel({
   steps,
   isStreaming,
   totalLatencyMs,
+  ttftMs,
   queryUsage,
   queryCostUsd,
   sessionUsage,
@@ -39,6 +41,12 @@ export function TracePanel({
         <div className="ml-auto flex items-center gap-2">
           {totalLatencyMs !== null && !isStreaming && (
             <span className="text-muted-foreground tabular-nums text-xs">
+              {ttftMs != null && (
+                <>
+                  <span title="Time to first token">{formatDuration(ttftMs)} TTFT</span>
+                  <span className="mx-1 opacity-30">·</span>
+                </>
+              )}
               {formatDuration(totalLatencyMs)} total
             </span>
           )}

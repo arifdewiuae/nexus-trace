@@ -17,6 +17,7 @@ export function ChatContainer() {
     traceSteps,
     isStreaming,
     totalLatencyMs,
+    ttftMs,
     queryUsage,
     queryCostUsd,
     sessionUsage,
@@ -70,6 +71,7 @@ export function ChatContainer() {
               steps={traceSteps}
               isStreaming={isStreaming}
               totalLatencyMs={totalLatencyMs}
+              ttftMs={ttftMs}
               queryUsage={queryUsage}
               queryCostUsd={queryCostUsd}
               sessionUsage={sessionUsage}

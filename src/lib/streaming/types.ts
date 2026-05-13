@@ -28,6 +28,7 @@ export type StreamEvent =
       type: typeof STREAM_EVENT.DONE
       totalSteps: number
       latencyMs: number
+      ttftMs?: number
       inputTokens?: number
       outputTokens?: number
       estimatedCostUsd?: number

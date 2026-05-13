@@ -27,6 +27,12 @@ export const DEFAULT_MODEL_PRICING = { inputPer1M: 0.22, outputPer1M: 0.88 }
 export const HEADER_FIREWORKS_KEY = "x-fireworks-key"
 export const HEADER_TAVILY_KEY = "x-tavily-key"
 
+export const SESSION_COOKIE_NAME = "nexus-sid"
+export const MAX_MESSAGE_LENGTH = 4000
+export const RATE_LIMIT_DEMO_MAX = 20
+export const RATE_LIMIT_OWN_KEY_MAX = 100
+export const RATE_LIMIT_WINDOW_S = 3600
+
 export const GRAPH_EVENTS = {
   CHAT_MODEL_START: "on_chat_model_start",
   CHAT_MODEL_STREAM: "on_chat_model_stream",

@@ -13,6 +13,7 @@ export const AGENT_MAX_ITERATIONS = 4
 export const STORAGE_KEY_MESSAGES = "nexus-trace:messages"
 export const STORAGE_KEY_TRACE_STEPS = "nexus-trace:trace-steps"
 export const STORAGE_KEY_API_KEYS = "nexus-trace:api-keys"
+export const STORAGE_KEY_QUERY_USAGE = "nexus-trace:query-usage"
 export const STORAGE_KEY_SESSION_USAGE = "nexus-trace:session-usage"
 
 // Fireworks serverless pricing per 1M tokens (standard tier)

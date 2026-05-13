@@ -7,7 +7,12 @@ import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { STREAM_EVENT, type StreamEvent } from "@/lib/streaming/types"
 import { parseSSE } from "@/lib/streaming/utils"
 import { streamChat } from "@/lib/api/chat"
-import { STORAGE_KEY_MESSAGES, STORAGE_KEY_TRACE_STEPS, STORAGE_KEY_SESSION_USAGE } from "@/lib/config"
+import {
+  STORAGE_KEY_MESSAGES,
+  STORAGE_KEY_TRACE_STEPS,
+  STORAGE_KEY_SESSION_USAGE,
+  STORAGE_KEY_QUERY_USAGE,
+} from "@/lib/config"
 
 function readStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback
@@ -43,6 +48,10 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   useEffect(() => {
     const storedMessages = readStorage<Message[]>(STORAGE_KEY_MESSAGES, [])
     const storedSteps = readStorage<TraceStep[]>(STORAGE_KEY_TRACE_STEPS, [])
+    const storedQuery = readStorage<{ usage: TokenUsage; costUsd: number | null } | null>(
+      STORAGE_KEY_QUERY_USAGE,
+      null
+    )
     const storedSession = readStorage<{ usage: TokenUsage; costUsd: number } | null>(
       STORAGE_KEY_SESSION_USAGE,
       null
@@ -52,6 +61,10 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     }
     if (storedSteps.length > 0) {
       setTraceSteps(storedSteps)
+    }
+    if (storedQuery) {
+      setQueryUsage(storedQuery.usage)
+      setQueryCostUsd(storedQuery.costUsd)
     }
     if (storedSession) {
       setSessionUsage(storedSession.usage)
@@ -66,6 +79,26 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY_TRACE_STEPS, JSON.stringify(traceSteps))
   }, [traceSteps])
+
+  useEffect(() => {
+    if (queryUsage !== null) {
+      sessionStorage.setItem(
+        STORAGE_KEY_QUERY_USAGE,
+        JSON.stringify({ usage: queryUsage, costUsd: queryCostUsd })
+      )
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY_QUERY_USAGE)
+    }
+  }, [queryUsage, queryCostUsd])
+
+  useEffect(() => {
+    if (sessionUsage.totalTokens > 0) {
+      sessionStorage.setItem(
+        STORAGE_KEY_SESSION_USAGE,
+        JSON.stringify({ usage: sessionUsage, costUsd: sessionCostUsd })
+      )
+    }
+  }, [sessionUsage, sessionCostUsd])
 
   const applyEvent = useCallback((event: StreamEvent, assistantId: string) => {
     switch (event.type) {
@@ -148,22 +181,12 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
           const cost = event.estimatedCostUsd ?? null
           setQueryUsage(usage)
           setQueryCostUsd(cost)
-          setSessionUsage((prev) => {
-            const next = {
-              inputTokens: prev.inputTokens + usage.inputTokens,
-              outputTokens: prev.outputTokens + usage.outputTokens,
-              totalTokens: prev.totalTokens + usage.totalTokens,
-            }
-            setSessionCostUsd((prevCost) => {
-              const nextCost = prevCost + (cost ?? 0)
-              sessionStorage.setItem(
-                STORAGE_KEY_SESSION_USAGE,
-                JSON.stringify({ usage: next, costUsd: nextCost })
-              )
-              return nextCost
-            })
-            return next
-          })
+          setSessionUsage((prev) => ({
+            inputTokens: prev.inputTokens + usage.inputTokens,
+            outputTokens: prev.outputTokens + usage.outputTokens,
+            totalTokens: prev.totalTokens + usage.totalTokens,
+          }))
+          setSessionCostUsd((prev) => prev + (cost ?? 0))
         }
         break
 
@@ -222,6 +245,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     abortRef.current?.abort()
     sessionStorage.removeItem(STORAGE_KEY_MESSAGES)
     sessionStorage.removeItem(STORAGE_KEY_TRACE_STEPS)
+    sessionStorage.removeItem(STORAGE_KEY_QUERY_USAGE)
     sessionStorage.removeItem(STORAGE_KEY_SESSION_USAGE)
     setMessages([])
     setTraceSteps([])

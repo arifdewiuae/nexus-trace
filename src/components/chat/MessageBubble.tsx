@@ -1,8 +1,38 @@
+"use client"
+
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { remarkNoTables } from "@/lib/remark-no-tables"
+import type { ComponentPropsWithoutRef } from "react"
 import type { Message } from "@/lib/types"
 import { cn } from "@/lib/utils"
+
+// Evaluated once on the client at module load — mobile gets list view, desktop gets tables.
+const USE_TABLES = typeof window !== "undefined" && window.innerWidth >= 768
+
+const remarkPlugins = USE_TABLES ? [remarkGfm] : [remarkGfm, remarkNoTables]
+
+function ScrollableTable({ children }: ComponentPropsWithoutRef<"table">) {
+  return (
+    <div className="overflow-x-auto rounded-lg">
+      <table>{children}</table>
+    </div>
+  )
+}
+
+const tableComponents = USE_TABLES ? { table: ScrollableTable } : undefined
+
+const proseClasses = `prose prose-invert prose-sm max-w-none
+  prose-p:my-1 prose-p:leading-relaxed
+  prose-headings:mt-3 prose-headings:mb-1 prose-headings:font-semibold
+  prose-ul:my-1 prose-ul:pl-4 prose-ol:my-1 prose-ol:pl-4
+  prose-li:my-0.5
+  prose-strong:font-semibold
+  prose-blockquote:border-l-2 prose-blockquote:border-muted-foreground/40 prose-blockquote:pl-3 prose-blockquote:italic prose-blockquote:text-muted-foreground
+  prose-code:bg-background/60 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
+  prose-pre:bg-background/60 prose-pre:rounded-lg
+  prose-table:text-sm prose-th:font-semibold prose-td:py-1
+  prose-hr:border-border`
 
 type Props = { message: Message }
 
@@ -37,19 +67,8 @@ export function MessageBubble({ message }: Props) {
             ))}
           </div>
         ) : (
-          <div
-            className="prose prose-invert prose-sm max-w-none
-              prose-p:my-1 prose-p:leading-relaxed
-              prose-headings:mt-3 prose-headings:mb-1 prose-headings:font-semibold
-              prose-ul:my-1 prose-ul:pl-4 prose-ol:my-1 prose-ol:pl-4
-              prose-li:my-0.5
-              prose-strong:font-semibold
-              prose-blockquote:border-l-2 prose-blockquote:border-muted-foreground/40 prose-blockquote:pl-3 prose-blockquote:italic prose-blockquote:text-muted-foreground
-              prose-code:bg-background/60 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
-              prose-pre:bg-background/60 prose-pre:rounded-lg
-              prose-hr:border-border"
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm, remarkNoTables]}>
+          <div className={proseClasses}>
+            <ReactMarkdown remarkPlugins={remarkPlugins} components={tableComponents}>
               {message.content + (message.isStreaming ? "​" : "")}
             </ReactMarkdown>
             {message.isStreaming && (

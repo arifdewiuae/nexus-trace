@@ -3,7 +3,7 @@
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { remarkNoTables } from "@/lib/remark-no-tables"
-import type { ComponentPropsWithoutRef } from "react"
+import type { ComponentPropsWithoutRef, AnchorHTMLAttributes } from "react"
 import type { Message } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { MOBILE_BREAKPOINT_PX } from "@/lib/config"
@@ -21,7 +21,14 @@ function ScrollableTable({ children }: ComponentPropsWithoutRef<"table">) {
   )
 }
 
-const tableComponents = USE_TABLES ? { table: ScrollableTable } : undefined
+function ExternalLink({ href, children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return <a href={href} target="_blank" rel="noreferrer" {...props}>{children}</a>
+}
+
+const baseComponents = { a: ExternalLink }
+const tableComponents = USE_TABLES
+  ? { ...baseComponents, table: ScrollableTable }
+  : baseComponents
 
 const proseClasses = `prose prose-invert prose-sm max-w-none
   prose-p:my-1 prose-p:leading-relaxed
@@ -73,7 +80,7 @@ export function MessageBubble({ message }: Props) {
           </div>
         ) : (
           <div className={proseClasses}>
-            <ReactMarkdown remarkPlugins={remarkPlugins} components={tableComponents}>
+            <ReactMarkdown remarkPlugins={remarkPlugins} components={tableComponents as object}>
               {normaliseBr(message.content) + (message.isStreaming ? "​" : "")}
             </ReactMarkdown>
             {message.isStreaming && (

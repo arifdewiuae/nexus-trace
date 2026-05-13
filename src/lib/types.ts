@@ -29,6 +29,7 @@ export type TraceStepStatus = (typeof TRACE_STATUS)[keyof typeof TRACE_STATUS]
 export const STEP_TYPE = {
   TOOL: "tool",
   MODEL: "model",
+  DIVIDER: "divider",
 } as const
 
 export const MODEL_LABEL = {

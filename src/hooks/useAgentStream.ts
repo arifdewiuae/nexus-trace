@@ -213,7 +213,20 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
         { id: crypto.randomUUID(), role: "user", content },
         { id: assistantId, role: "assistant", content: "", isStreaming: true },
       ])
-      setTraceSteps([])
+      setTraceSteps((prev) =>
+        prev.length > 0
+          ? [
+              ...prev,
+              {
+                id: crypto.randomUUID(),
+                stepType: STEP_TYPE.DIVIDER,
+                toolName: "",
+                status: TRACE_STATUS.DONE,
+                startedAt: Date.now(),
+              },
+            ]
+          : prev
+      )
       setIsStreaming(true)
       setTotalLatencyMs(null)
       setQueryUsage(null)

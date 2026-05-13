@@ -32,6 +32,21 @@ type Props = {
 }
 
 export function TraceStepCard({ step, index }: Props) {
+  if (step.stepType === STEP_TYPE.DIVIDER) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="flex items-center gap-2 py-1"
+      >
+        <div className="bg-border h-px flex-1" />
+        <span className="text-muted-foreground/40 text-[10px] uppercase tracking-widest">new query</span>
+        <div className="bg-border h-px flex-1" />
+      </motion.div>
+    )
+  }
+
   const isModel = step.stepType === STEP_TYPE.MODEL
   const icon = isModel ? (
     <BrainCircuit className="h-3.5 w-3.5" />

@@ -12,6 +12,8 @@ import {
   AGENT_MAX_TOKENS,
   AGENT_MAX_ITERATIONS,
   GRAPH_EVENTS,
+  MODEL_PRICING,
+  DEFAULT_MODEL_PRICING,
 } from "@/lib/config"
 
 function createModel(fireworksKey: string) {
@@ -46,8 +48,13 @@ export async function* runAgentStream(
     systemPrompt: AGENT_SYSTEM_PROMPT,
   })
 
+  const modelId = process.env.FIREWORKS_MODEL ?? DEFAULT_MODEL
+  const pricing = MODEL_PRICING[modelId] ?? DEFAULT_MODEL_PRICING
+
   const startTime = Date.now()
   let stepIndex = 0
+  let totalInputTokens = 0
+  let totalOutputTokens = 0
   const toolStartTimes = new Map<string, number>()
   const modelStartTimes = new Map<string, number>()
 
@@ -93,6 +100,13 @@ export async function* runAgentStream(
       const durationMs = Date.now() - (modelStartTimes.get(runId) ?? Date.now())
       modelStartTimes.delete(runId)
       modelHasTokens.delete(runId)
+
+      // Extract token usage — LangChain Core uses usage_metadata; OpenAI compat uses token_usage
+      const meta = data?.output?.usage_metadata
+      const compat = data?.output?.response_metadata?.token_usage
+      totalInputTokens += meta?.input_tokens ?? compat?.prompt_tokens ?? 0
+      totalOutputTokens += meta?.output_tokens ?? compat?.completion_tokens ?? 0
+
       yield encodeEvent({ type: STREAM_EVENT.MODEL_END, modelCallId: runId, durationMs })
     }
 
@@ -121,9 +135,17 @@ export async function* runAgentStream(
     }
   }
 
+  const hasUsage = totalInputTokens + totalOutputTokens > 0
+  const estimatedCostUsd = hasUsage
+    ? (totalInputTokens * pricing.inputPer1M + totalOutputTokens * pricing.outputPer1M) / 1_000_000
+    : undefined
+
   yield encodeEvent({
     type: STREAM_EVENT.DONE,
     totalSteps: stepIndex,
     latencyMs: Date.now() - startTime,
+    inputTokens: hasUsage ? totalInputTokens : undefined,
+    outputTokens: hasUsage ? totalOutputTokens : undefined,
+    estimatedCostUsd,
   })
 }

@@ -2,18 +2,32 @@
 
 import { Activity } from "lucide-react"
 import { AnimatePresence } from "framer-motion"
-import type { TraceStep } from "@/lib/types"
+import type { TraceStep, TokenUsage } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { formatDuration } from "@/lib/utils"
+import { formatDuration, formatCost, formatTokenCount } from "@/lib/utils"
 import { TraceStepCard } from "./TraceStepCard"
 
 type Props = {
   steps: TraceStep[]
   isStreaming: boolean
   totalLatencyMs: number | null
+  queryUsage?: TokenUsage | null
+  queryCostUsd?: number | null
+  sessionUsage?: TokenUsage
+  sessionCostUsd?: number
 }
 
-export function TracePanel({ steps, isStreaming, totalLatencyMs }: Props) {
+export function TracePanel({
+  steps,
+  isStreaming,
+  totalLatencyMs,
+  queryUsage,
+  queryCostUsd,
+  sessionUsage,
+  sessionCostUsd,
+}: Props) {
+  const hasSessionData = (sessionUsage?.totalTokens ?? 0) > 0
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -37,6 +51,34 @@ export function TracePanel({ steps, isStreaming, totalLatencyMs }: Props) {
           )}
         </div>
       </div>
+
+      {/* Per-query token stats */}
+      {queryUsage && !isStreaming && (
+        <div className="border-border text-muted-foreground flex shrink-0 items-center gap-2 border-b px-4 py-2 text-xs">
+          <span className="tabular-nums">
+            <span className="text-foreground/70">{formatTokenCount(queryUsage.inputTokens)}</span>
+            {" in"}
+          </span>
+          <span className="text-muted-foreground/30">·</span>
+          <span className="tabular-nums">
+            <span className="text-foreground/70">{formatTokenCount(queryUsage.outputTokens)}</span>
+            {" out"}
+          </span>
+          <span className="text-muted-foreground/30">·</span>
+          <span className="tabular-nums">
+            <span className="text-foreground/70">{formatTokenCount(queryUsage.totalTokens)}</span>
+            {" tokens"}
+          </span>
+          {queryCostUsd != null && (
+            <>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="ml-auto font-mono text-emerald-400/90">
+                ~{formatCost(queryCostUsd)}
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Steps */}
       {steps.length === 0 ? (
@@ -62,6 +104,21 @@ export function TracePanel({ steps, isStreaming, totalLatencyMs }: Props) {
               <TraceStepCard key={step.id} step={step} index={i} />
             ))}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Session totals */}
+      {hasSessionData && sessionUsage && (
+        <div className="border-border text-muted-foreground/60 flex shrink-0 items-center gap-2 border-t px-4 py-2 text-xs">
+          <span>Session</span>
+          <span className="text-muted-foreground/30">·</span>
+          <span className="tabular-nums">{formatTokenCount(sessionUsage.totalTokens)} tokens</span>
+          {(sessionCostUsd ?? 0) > 0 && (
+            <>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="tabular-nums font-mono">~{formatCost(sessionCostUsd ?? 0)}</span>
+            </>
+          )}
         </div>
       )}
     </div>

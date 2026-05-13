@@ -8,3 +8,14 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDuration(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`
 }
+
+export function formatCost(usd: number): string {
+  if (usd < 0.00005) return "<$0.0001"
+  if (usd < 0.001) return `$${usd.toFixed(4)}`
+  if (usd < 0.1) return `$${usd.toFixed(3)}`
+  return `$${usd.toFixed(2)}`
+}
+
+export function formatTokenCount(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
+}

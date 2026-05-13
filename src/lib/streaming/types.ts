@@ -24,7 +24,14 @@ export type StreamEvent =
       durationMs: number
     }
   | { type: typeof STREAM_EVENT.STEP_END; stepIndex: number }
-  | { type: typeof STREAM_EVENT.DONE; totalSteps: number; latencyMs: number }
+  | {
+      type: typeof STREAM_EVENT.DONE
+      totalSteps: number
+      latencyMs: number
+      inputTokens?: number
+      outputTokens?: number
+      estimatedCostUsd?: number
+    }
   | { type: typeof STREAM_EVENT.ERROR; message: string }
 
 export function encodeEvent(event: StreamEvent): string {

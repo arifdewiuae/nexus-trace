@@ -1,13 +1,13 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { Message, TraceStep, ApiKeys } from "@/lib/types"
+import type { Message, TraceStep, ApiKeys, TokenUsage } from "@/lib/types"
 import type { HistoryMessage } from "@/lib/api/chat"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { STREAM_EVENT, type StreamEvent } from "@/lib/streaming/types"
 import { parseSSE } from "@/lib/streaming/utils"
 import { streamChat } from "@/lib/api/chat"
-import { STORAGE_KEY_MESSAGES, STORAGE_KEY_TRACE_STEPS } from "@/lib/config"
+import { STORAGE_KEY_MESSAGES, STORAGE_KEY_TRACE_STEPS, STORAGE_KEY_SESSION_USAGE } from "@/lib/config"
 
 function readStorage<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback
@@ -24,6 +24,10 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   const [traceSteps, setTraceSteps] = useState<TraceStep[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [totalLatencyMs, setTotalLatencyMs] = useState<number | null>(null)
+  const [queryUsage, setQueryUsage] = useState<TokenUsage | null>(null)
+  const [queryCostUsd, setQueryCostUsd] = useState<number | null>(null)
+  const [sessionUsage, setSessionUsage] = useState<TokenUsage>({ inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+  const [sessionCostUsd, setSessionCostUsd] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const messagesRef = useRef<Message[]>(messages)
@@ -39,11 +43,19 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   useEffect(() => {
     const storedMessages = readStorage<Message[]>(STORAGE_KEY_MESSAGES, [])
     const storedSteps = readStorage<TraceStep[]>(STORAGE_KEY_TRACE_STEPS, [])
+    const storedSession = readStorage<{ usage: TokenUsage; costUsd: number } | null>(
+      STORAGE_KEY_SESSION_USAGE,
+      null
+    )
     if (storedMessages.length > 0) {
       setMessages(storedMessages.map((m) => ({ ...m, isStreaming: false })))
     }
     if (storedSteps.length > 0) {
       setTraceSteps(storedSteps)
+    }
+    if (storedSession) {
+      setSessionUsage(storedSession.usage)
+      setSessionCostUsd(storedSession.costUsd)
     }
   }, [])
 
@@ -127,6 +139,32 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
 
       case STREAM_EVENT.DONE:
         setTotalLatencyMs(event.latencyMs)
+        if (event.inputTokens != null && event.outputTokens != null) {
+          const usage: TokenUsage = {
+            inputTokens: event.inputTokens,
+            outputTokens: event.outputTokens,
+            totalTokens: event.inputTokens + event.outputTokens,
+          }
+          const cost = event.estimatedCostUsd ?? null
+          setQueryUsage(usage)
+          setQueryCostUsd(cost)
+          setSessionUsage((prev) => {
+            const next = {
+              inputTokens: prev.inputTokens + usage.inputTokens,
+              outputTokens: prev.outputTokens + usage.outputTokens,
+              totalTokens: prev.totalTokens + usage.totalTokens,
+            }
+            setSessionCostUsd((prevCost) => {
+              const nextCost = prevCost + (cost ?? 0)
+              sessionStorage.setItem(
+                STORAGE_KEY_SESSION_USAGE,
+                JSON.stringify({ usage: next, costUsd: nextCost })
+              )
+              return nextCost
+            })
+            return next
+          })
+        }
         break
 
       case STREAM_EVENT.ERROR:
@@ -155,6 +193,8 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
       setTraceSteps([])
       setIsStreaming(true)
       setTotalLatencyMs(null)
+      setQueryUsage(null)
+      setQueryCostUsd(null)
       setError(null)
 
       try {
@@ -182,11 +222,16 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     abortRef.current?.abort()
     sessionStorage.removeItem(STORAGE_KEY_MESSAGES)
     sessionStorage.removeItem(STORAGE_KEY_TRACE_STEPS)
+    sessionStorage.removeItem(STORAGE_KEY_SESSION_USAGE)
     setMessages([])
     setTraceSteps([])
     setError(null)
     setIsStreaming(false)
     setTotalLatencyMs(null)
+    setQueryUsage(null)
+    setQueryCostUsd(null)
+    setSessionUsage({ inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+    setSessionCostUsd(0)
   }, [])
 
   const clearError = useCallback(() => setError(null), [])
@@ -200,6 +245,10 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     traceSteps,
     isStreaming,
     totalLatencyMs,
+    queryUsage,
+    queryCostUsd,
+    sessionUsage,
+    sessionCostUsd,
     error,
     sendMessage,
     clearMessages,

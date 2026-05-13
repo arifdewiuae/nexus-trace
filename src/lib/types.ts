@@ -3,6 +3,12 @@ export type ApiKeys = {
   tavilyKey: string
 }
 
+export type TokenUsage = {
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+}
+
 export type MessageRole = "user" | "assistant"
 
 export type Message = {

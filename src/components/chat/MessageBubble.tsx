@@ -1,23 +1,8 @@
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { ComponentPropsWithoutRef } from "react"
+import { remarkNoTables } from "@/lib/remark-no-tables"
 import type { Message } from "@/lib/types"
 import { cn } from "@/lib/utils"
-
-function ResponsiveTable({ children }: ComponentPropsWithoutRef<"table">) {
-  return (
-    <>
-      {/* Desktop: normal horizontally scrollable table */}
-      <div className="hidden overflow-x-auto md:block">
-        <table>{children}</table>
-      </div>
-      {/* Mobile: CSS card layout via .mobile-table */}
-      <div className="mobile-table md:hidden">
-        <table>{children}</table>
-      </div>
-    </>
-  )
-}
 
 type Props = { message: Message }
 
@@ -62,13 +47,9 @@ export function MessageBubble({ message }: Props) {
               prose-blockquote:border-l-2 prose-blockquote:border-muted-foreground/40 prose-blockquote:pl-3 prose-blockquote:italic prose-blockquote:text-muted-foreground
               prose-code:bg-background/60 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono
               prose-pre:bg-background/60 prose-pre:rounded-lg
-              prose-table:text-sm prose-th:font-semibold prose-td:py-1
               prose-hr:border-border"
           >
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{ table: ResponsiveTable }}
-            >
+            <ReactMarkdown remarkPlugins={[remarkGfm, remarkNoTables]}>
               {message.content + (message.isStreaming ? "​" : "")}
             </ReactMarkdown>
             {message.isStreaming && (

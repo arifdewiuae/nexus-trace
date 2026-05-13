@@ -1,7 +1,23 @@
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import type { ComponentPropsWithoutRef } from "react"
 import type { Message } from "@/lib/types"
 import { cn } from "@/lib/utils"
+
+function ResponsiveTable({ children }: ComponentPropsWithoutRef<"table">) {
+  return (
+    <>
+      {/* Desktop: normal horizontally scrollable table */}
+      <div className="hidden overflow-x-auto md:block">
+        <table>{children}</table>
+      </div>
+      {/* Mobile: CSS card layout via .mobile-table */}
+      <div className="mobile-table md:hidden">
+        <table>{children}</table>
+      </div>
+    </>
+  )
+}
 
 type Props = { message: Message }
 
@@ -51,13 +67,7 @@ export function MessageBubble({ message }: Props) {
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              components={{
-                table: ({ children }) => (
-                  <div className="overflow-x-auto">
-                    <table>{children}</table>
-                  </div>
-                ),
-              }}
+              components={{ table: ResponsiveTable }}
             >
               {message.content + (message.isStreaming ? "​" : "")}
             </ReactMarkdown>

@@ -29,9 +29,20 @@ const MODEL_STATUS_BORDER: Record<TraceStep["status"], string> = {
 type Props = {
   step: TraceStep
   index: number
+  nextTool?: TraceStep
 }
 
-export function TraceStepCard({ step, index }: Props) {
+function resolveToolDecision(nextTool: TraceStep | undefined): string | undefined {
+  if (!nextTool) return undefined
+  const args = nextTool.args
+  if (args && typeof args === "object") {
+    const query = (args as Record<string, unknown>).query
+    if (typeof query === "string" && query.trim()) return `→ ${nextTool.toolName}: "${query}"`
+  }
+  return `→ ${nextTool.toolName}`
+}
+
+export function TraceStepCard({ step, index, nextTool }: Props) {
   if (step.stepType === STEP_TYPE.DIVIDER) {
     return (
       <motion.div
@@ -79,6 +90,12 @@ export function TraceStepCard({ step, index }: Props) {
           <StatusIndicator status={step.status} />
         </div>
       </div>
+
+      {isModel && resolveToolDecision(nextTool) && (
+        <p className="text-muted-foreground/70 mt-1.5 truncate font-mono text-[11px]">
+          {resolveToolDecision(nextTool)}
+        </p>
+      )}
 
       {!isModel && (
         <div className="border-border mt-2.5 space-y-2 border-t pt-2.5">

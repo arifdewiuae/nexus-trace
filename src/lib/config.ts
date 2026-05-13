@@ -26,6 +26,8 @@ export const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: nu
 // Fallback for any other model (70B+ serverless tier)
 export const DEFAULT_MODEL_PRICING = { inputPer1M: 0.22, outputPer1M: 0.88 }
 
+export const MOBILE_BREAKPOINT_PX = 768
+
 export const HEADER_FIREWORKS_KEY = "x-fireworks-key"
 export const HEADER_TAVILY_KEY = "x-tavily-key"
 

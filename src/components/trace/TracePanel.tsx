@@ -3,6 +3,7 @@
 import { Activity } from "lucide-react"
 import { AnimatePresence } from "framer-motion"
 import type { TraceStep, TokenUsage } from "@/lib/types"
+import { STEP_TYPE } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { formatDuration, formatCost, formatTokenCount } from "@/lib/utils"
 import { TraceStepCard } from "./TraceStepCard"
@@ -100,9 +101,13 @@ export function TracePanel({
       ) : (
         <div className="flex-1 space-y-2 overflow-y-auto p-3">
           <AnimatePresence initial={false}>
-            {steps.map((step, i) => (
-              <TraceStepCard key={step.id} step={step} index={i} />
-            ))}
+            {steps.map((step, i) => {
+              const nextTool =
+                step.stepType === STEP_TYPE.MODEL
+                  ? steps.slice(i + 1).find((s) => s.stepType === STEP_TYPE.TOOL)
+                  : undefined
+              return <TraceStepCard key={step.id} step={step} index={i} nextTool={nextTool} />
+            })}
           </AnimatePresence>
         </div>
       )}

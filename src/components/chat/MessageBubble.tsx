@@ -6,9 +6,10 @@ import { remarkNoTables } from "@/lib/remark-no-tables"
 import type { ComponentPropsWithoutRef } from "react"
 import type { Message } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { MOBILE_BREAKPOINT_PX } from "@/lib/config"
 
 // Evaluated once on the client at module load — mobile gets list view, desktop gets tables.
-const USE_TABLES = typeof window !== "undefined" && window.innerWidth >= 768
+const USE_TABLES = typeof window !== "undefined" && window.innerWidth >= MOBILE_BREAKPOINT_PX
 
 const remarkPlugins = USE_TABLES ? [remarkGfm] : [remarkGfm, remarkNoTables]
 

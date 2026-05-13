@@ -35,6 +35,10 @@ const proseClasses = `prose prose-invert prose-sm max-w-none
   prose-table:text-sm prose-th:font-semibold prose-td:py-1
   prose-hr:border-border`
 
+function normaliseBr(text: string): string {
+  return text.replace(/<br\s*\/?>/gi, "\n")
+}
+
 type Props = { message: Message }
 
 export function MessageBubble({ message }: Props) {
@@ -70,7 +74,7 @@ export function MessageBubble({ message }: Props) {
         ) : (
           <div className={proseClasses}>
             <ReactMarkdown remarkPlugins={remarkPlugins} components={tableComponents}>
-              {message.content + (message.isStreaming ? "​" : "")}
+              {normaliseBr(message.content) + (message.isStreaming ? "​" : "")}
             </ReactMarkdown>
             {message.isStreaming && (
               <span className="inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />

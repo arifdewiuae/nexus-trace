@@ -52,6 +52,7 @@ export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
         <button
           onClick={isStreaming ? onStop : handleSend}
           disabled={!isStreaming && (!value.trim() || !hasKeys)}
+          aria-label={isStreaming ? "Stop generation" : "Send message"}
           className={cn(
             "shrink-0 cursor-pointer rounded-lg p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed",
             isStreaming
@@ -62,7 +63,7 @@ export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
           {isStreaming ? <Square className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
         </button>
       </div>
-      <p className="text-muted-foreground/60 mt-1.5 text-center text-xs">
+      <p className="text-muted-foreground mt-1.5 text-center text-xs">
         Enter to send · Shift+Enter for newline
       </p>
     </div>

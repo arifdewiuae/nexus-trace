@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm"
 import { remarkNoTables } from "@/lib/remark-no-tables"
 import type { ComponentPropsWithoutRef, AnchorHTMLAttributes } from "react"
 import type { Message } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, normaliseBr } from "@/lib/utils"
 import { MOBILE_BREAKPOINT_PX } from "@/lib/config"
 
 // Evaluated once on the client at module load — mobile gets list view, desktop gets tables.
@@ -41,10 +41,6 @@ const proseClasses = `prose prose-invert prose-sm max-w-none
   prose-pre:bg-background/60 prose-pre:rounded-lg
   prose-table:text-sm prose-th:font-semibold prose-td:py-1
   prose-hr:border-border`
-
-function normaliseBr(text: string): string {
-  return text.replace(/<br\s*\/?>/gi, "\n")
-}
 
 type Props = { message: Message }
 

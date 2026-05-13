@@ -32,7 +32,7 @@ function createModel(fireworksKey: string) {
   })
 }
 
-function trimHistory(history: { role: string; content: string }[]) {
+export function trimHistory(history: { role: string; content: string }[]) {
   const maxMessages = HISTORY_MAX_TURNS * 2
   return history.slice(-maxMessages).map((m) =>
     m.content.length > HISTORY_MAX_CHARS_PER_MESSAGE

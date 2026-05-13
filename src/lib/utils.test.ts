@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatDuration, formatCost, formatTokenCount } from "./utils"
+import { formatDuration, formatCost, formatTokenCount, normaliseBr, resolveToolDecision } from "./utils"
 
 describe("formatDuration", () => {
   it("shows ms for values under 1 second", () => {
@@ -65,5 +65,52 @@ describe("formatTokenCount", () => {
     expect(formatTokenCount(1500)).toBe("1.5k")
     expect(formatTokenCount(12300)).toBe("12.3k")
     expect(formatTokenCount(100000)).toBe("100.0k")
+  })
+})
+
+describe("normaliseBr", () => {
+  it("replaces <br> with newline", () => {
+    expect(normaliseBr("a<br>b")).toBe("a\nb")
+  })
+
+  it("handles self-closing variants", () => {
+    expect(normaliseBr("a<br/>b")).toBe("a\nb")
+    expect(normaliseBr("a<br />b")).toBe("a\nb")
+  })
+
+  it("is case-insensitive", () => {
+    expect(normaliseBr("a<BR>b")).toBe("a\nb")
+    expect(normaliseBr("a<Br />b")).toBe("a\nb")
+  })
+
+  it("replaces multiple occurrences", () => {
+    expect(normaliseBr("a<br>b<br>c")).toBe("a\nb\nc")
+  })
+
+  it("returns unchanged string when no br tags", () => {
+    expect(normaliseBr("hello world")).toBe("hello world")
+  })
+})
+
+describe("resolveToolDecision", () => {
+  it("includes query string when present", () => {
+    expect(resolveToolDecision("web_search", { query: "latest AI news" }))
+      .toBe('→ web_search: "latest AI news"')
+  })
+
+  it("falls back to tool name only when no query", () => {
+    expect(resolveToolDecision("get_current_datetime", {})).toBe("→ get_current_datetime")
+  })
+
+  it("falls back when query is empty string", () => {
+    expect(resolveToolDecision("web_search", { query: "   " })).toBe("→ web_search")
+  })
+
+  it("falls back when args is null", () => {
+    expect(resolveToolDecision("web_search", null)).toBe("→ web_search")
+  })
+
+  it("falls back when args is a primitive", () => {
+    expect(resolveToolDecision("web_search", 42)).toBe("→ web_search")
   })
 })

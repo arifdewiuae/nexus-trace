@@ -19,3 +19,15 @@ export function formatCost(usd: number): string {
 export function formatTokenCount(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
 }
+
+export function normaliseBr(text: string): string {
+  return text.replace(/<br\s*\/?>/gi, "\n")
+}
+
+export function resolveToolDecision(toolName: string, args: unknown): string {
+  if (args && typeof args === "object") {
+    const query = (args as Record<string, unknown>).query
+    if (typeof query === "string" && query.trim()) return `→ ${toolName}: "${query}"`
+  }
+  return `→ ${toolName}`
+}

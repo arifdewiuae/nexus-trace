@@ -4,8 +4,7 @@ import { motion } from "framer-motion"
 import { BrainCircuit, Calendar, Search } from "lucide-react"
 import type { TraceStep } from "@/lib/types"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
-import { formatDuration } from "@/lib/utils"
-import { cn } from "@/lib/utils"
+import { formatDuration, cn, resolveToolDecision } from "@/lib/utils"
 import { JsonViewer } from "./JsonViewer"
 import { StatusIndicator } from "./StatusIndicator"
 
@@ -32,15 +31,6 @@ type Props = {
   nextTool?: TraceStep
 }
 
-function resolveToolDecision(nextTool: TraceStep | undefined): string | undefined {
-  if (!nextTool) return undefined
-  const args = nextTool.args
-  if (args && typeof args === "object") {
-    const query = (args as Record<string, unknown>).query
-    if (typeof query === "string" && query.trim()) return `→ ${nextTool.toolName}: "${query}"`
-  }
-  return `→ ${nextTool.toolName}`
-}
 
 export function TraceStepCard({ step, index, nextTool }: Props) {
   if (step.stepType === STEP_TYPE.DIVIDER) {
@@ -91,9 +81,9 @@ export function TraceStepCard({ step, index, nextTool }: Props) {
         </div>
       </div>
 
-      {isModel && resolveToolDecision(nextTool) && (
+      {isModel && nextTool && (
         <p className="text-muted-foreground/70 mt-1.5 truncate font-mono text-[11px]">
-          {resolveToolDecision(nextTool)}
+          {resolveToolDecision(nextTool.toolName, nextTool.args)}
         </p>
       )}
 

@@ -11,6 +11,8 @@ import {
   AGENT_TEMPERATURE,
   AGENT_MAX_TOKENS,
   AGENT_MAX_ITERATIONS,
+  HISTORY_MAX_TURNS,
+  HISTORY_MAX_CHARS_PER_MESSAGE,
   GRAPH_EVENTS,
   MODEL_PRICING,
   DEFAULT_MODEL_PRICING,
@@ -28,6 +30,15 @@ function createModel(fireworksKey: string) {
     temperature: AGENT_TEMPERATURE,
     maxTokens: AGENT_MAX_TOKENS,
   })
+}
+
+function trimHistory(history: { role: string; content: string }[]) {
+  const maxMessages = HISTORY_MAX_TURNS * 2
+  return history.slice(-maxMessages).map((m) =>
+    m.content.length > HISTORY_MAX_CHARS_PER_MESSAGE
+      ? { ...m, content: m.content.slice(0, HISTORY_MAX_CHARS_PER_MESSAGE) + "…" }
+      : m
+  )
 }
 
 function extractToolResult(output: unknown): unknown {
@@ -58,7 +69,7 @@ export async function* runAgentStream(
   const toolStartTimes = new Map<string, number>()
   const modelStartTimes = new Map<string, number>()
 
-  const historyMessages = history.map((m) =>
+  const historyMessages = trimHistory(history).map((m) =>
     m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
   )
 

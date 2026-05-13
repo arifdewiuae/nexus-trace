@@ -1,5 +1,5 @@
 export const FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
-export const DEFAULT_MODEL = "accounts/fireworks/models/gpt-oss-120b"
+export const DEFAULT_MODEL = "accounts/fireworks/models/gpt-oss-20b"
 export const AGENT_TEMPERATURE = 0.3
 export const AGENT_MAX_TOKENS = 2048
 
@@ -9,6 +9,8 @@ export const SEARCH_RETRY_DELAY_MS = 500
 export const SEARCH_RECENCY_DAYS = 90
 
 export const AGENT_MAX_ITERATIONS = 4
+export const HISTORY_MAX_TURNS = 10
+export const HISTORY_MAX_CHARS_PER_MESSAGE = 2000
 
 export const STORAGE_KEY_MESSAGES = "nexus-trace:messages"
 export const STORAGE_KEY_TRACE_STEPS = "nexus-trace:trace-steps"

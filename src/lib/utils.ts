@@ -21,7 +21,15 @@ export function formatTokenCount(n: number): string {
 }
 
 export function normaliseBr(text: string): string {
-  return text.replace(/<br\s*\/?>/gi, "\n")
+  return text
+    .split("\n")
+    .map((line) =>
+      // Inside a GFM table row a newline ends the cell, so use a space instead
+      /\|/.test(line)
+        ? line.replace(/<br\s*\/?>/gi, " ")
+        : line.replace(/<br\s*\/?>/gi, "\n")
+    )
+    .join("\n")
 }
 
 export function resolveToolDecision(toolName: string, args: unknown): string {

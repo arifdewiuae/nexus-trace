@@ -90,6 +90,14 @@ describe("normaliseBr", () => {
   it("returns unchanged string when no br tags", () => {
     expect(normaliseBr("hello world")).toBe("hello world")
   })
+
+  it("replaces <br> with space inside GFM table rows to preserve cell boundaries", () => {
+    expect(normaliseBr("| a | b<br>c | d |")).toBe("| a | b c | d |")
+  })
+
+  it("replaces <br> with newline on non-table lines", () => {
+    expect(normaliseBr("paragraph<br>text")).toBe("paragraph\ntext")
+  })
 })
 
 describe("resolveToolDecision", () => {

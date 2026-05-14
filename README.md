@@ -4,6 +4,8 @@ A streaming AI agent with a live tool-call trace panel. Ask a question, watch th
 
 Built as a portfolio project to demonstrate production-grade AI engineering: LangGraph ReAct loop, SSE streaming, rate limiting, session management, and a polished React UI.
 
+![Nexus Trace demo](demo.gif)
+
 ---
 
 ## Features

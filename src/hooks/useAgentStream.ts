@@ -25,15 +25,31 @@ function readStorage<T>(key: string, fallback: T): T {
 }
 
 export function useAgentStream(apiKeys?: ApiKeys | null) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [traceSteps, setTraceSteps] = useState<TraceStep[]>([])
+  const [messages, setMessages] = useState<Message[]>(() =>
+    readStorage<Message[]>(STORAGE_KEY_MESSAGES, []).map((m) => ({ ...m, isStreaming: false }))
+  )
+  const [traceSteps, setTraceSteps] = useState<TraceStep[]>(() =>
+    readStorage<TraceStep[]>(STORAGE_KEY_TRACE_STEPS, [])
+  )
   const [isStreaming, setIsStreaming] = useState(false)
   const [totalLatencyMs, setTotalLatencyMs] = useState<number | null>(null)
   const [ttftMs, setTtftMs] = useState<number | null>(null)
-  const [queryUsage, setQueryUsage] = useState<TokenUsage | null>(null)
-  const [queryCostUsd, setQueryCostUsd] = useState<number | null>(null)
-  const [sessionUsage, setSessionUsage] = useState<TokenUsage>({ inputTokens: 0, outputTokens: 0, totalTokens: 0 })
-  const [sessionCostUsd, setSessionCostUsd] = useState(0)
+  const [queryUsage, setQueryUsage] = useState<TokenUsage | null>(() => {
+    const s = readStorage<{ usage: TokenUsage; costUsd: number | null } | null>(STORAGE_KEY_QUERY_USAGE, null)
+    return s?.usage ?? null
+  })
+  const [queryCostUsd, setQueryCostUsd] = useState<number | null>(() => {
+    const s = readStorage<{ usage: TokenUsage; costUsd: number | null } | null>(STORAGE_KEY_QUERY_USAGE, null)
+    return s?.costUsd ?? null
+  })
+  const [sessionUsage, setSessionUsage] = useState<TokenUsage>(() => {
+    const s = readStorage<{ usage: TokenUsage; costUsd: number } | null>(STORAGE_KEY_SESSION_USAGE, null)
+    return s?.usage ?? { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+  })
+  const [sessionCostUsd, setSessionCostUsd] = useState<number>(() => {
+    const s = readStorage<{ usage: TokenUsage; costUsd: number } | null>(STORAGE_KEY_SESSION_USAGE, null)
+    return s?.costUsd ?? 0
+  })
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const messagesRef = useRef<Message[]>(messages)
@@ -44,34 +60,6 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   useEffect(() => {
     apiKeysRef.current = apiKeys
   }, [apiKeys])
-
-  // Restore from sessionStorage after mount to avoid SSR/client mismatch
-  useEffect(() => {
-    const storedMessages = readStorage<Message[]>(STORAGE_KEY_MESSAGES, [])
-    const storedSteps = readStorage<TraceStep[]>(STORAGE_KEY_TRACE_STEPS, [])
-    const storedQuery = readStorage<{ usage: TokenUsage; costUsd: number | null } | null>(
-      STORAGE_KEY_QUERY_USAGE,
-      null
-    )
-    const storedSession = readStorage<{ usage: TokenUsage; costUsd: number } | null>(
-      STORAGE_KEY_SESSION_USAGE,
-      null
-    )
-    if (storedMessages.length > 0) {
-      setMessages(storedMessages.map((m) => ({ ...m, isStreaming: false })))
-    }
-    if (storedSteps.length > 0) {
-      setTraceSteps(storedSteps)
-    }
-    if (storedQuery) {
-      setQueryUsage(storedQuery.usage)
-      setQueryCostUsd(storedQuery.costUsd)
-    }
-    if (storedSession) {
-      setSessionUsage(storedSession.usage)
-      setSessionCostUsd(storedSession.costUsd)
-    }
-  }, [])
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(messages))

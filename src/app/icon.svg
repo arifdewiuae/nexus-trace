@@ -11,5 +11,6 @@
   </defs>
   <rect width="512" height="512" rx="110" fill="#0a0a0a"/>
   <rect width="512" height="512" rx="110" fill="url(#glow)"/>
+  <!-- Lucide Zap path scaled to fill canvas, centered -->
   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#bolt)" transform="translate(76,76) scale(15)"/>
 </svg>

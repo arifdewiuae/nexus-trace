@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { BrainCircuit, Calendar, Search } from "lucide-react"
+import { BrainCircuit, Calendar, Search, ShieldCheck } from "lucide-react"
 import type { TraceStep } from "@/lib/types"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { formatDuration, cn, resolveToolDecision } from "@/lib/utils"
@@ -11,6 +11,7 @@ import { StatusIndicator } from "./StatusIndicator"
 const TOOL_ICONS: Record<string, React.ReactNode> = {
   web_search: <Search className="h-3.5 w-3.5" />,
   get_current_datetime: <Calendar className="h-3.5 w-3.5" />,
+  content_check: <ShieldCheck className="h-3.5 w-3.5" />,
 }
 
 const STATUS_BORDER: Record<TraceStep["status"], string> = {
@@ -87,7 +88,7 @@ export function TraceStepCard({ step, index, nextTool }: Props) {
         </p>
       )}
 
-      {!isModel && (
+      {!isModel && (step.args !== undefined || step.result !== undefined) && (
         <div className="border-border mt-2.5 space-y-2 border-t pt-2.5">
           {step.args !== undefined && <JsonViewer label="Args" data={step.args} />}
           {step.result !== undefined && <JsonViewer label="Result" data={step.result} defaultOpen />}

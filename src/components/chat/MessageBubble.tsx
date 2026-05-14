@@ -7,6 +7,7 @@ import type { ComponentPropsWithoutRef, AnchorHTMLAttributes } from "react"
 import type { Message } from "@/lib/types"
 import { cn, normaliseBr } from "@/lib/utils"
 import { MOBILE_BREAKPOINT_PX } from "@/lib/config"
+import { CodeBlock } from "./CodeBlock"
 
 // Evaluated once on the client at module load — mobile gets list view, desktop gets tables.
 const USE_TABLES = typeof window !== "undefined" && window.innerWidth >= MOBILE_BREAKPOINT_PX
@@ -25,7 +26,7 @@ function ExternalLink({ href, children, ...props }: AnchorHTMLAttributes<HTMLAnc
   return <a href={href} target="_blank" rel="noreferrer" {...props}>{children}</a>
 }
 
-const baseComponents = { a: ExternalLink }
+const baseComponents = { a: ExternalLink, pre: CodeBlock }
 const tableComponents = USE_TABLES
   ? { ...baseComponents, table: ScrollableTable }
   : baseComponents

@@ -16,7 +16,7 @@ Built as a portfolio project to demonstrate production-grade AI engineering: Lan
 - **Context management** — history is capped to the last 10 turns and long messages are truncated before hitting the LLM
 - **Connection banner** — a fixed banner appears immediately when the network drops
 - **Device-aware rendering** — tables on desktop, structured bullet lists on mobile
-- **Sharp persona** — Nexus has a distinct voice: confident, direct, occasionally dry
+- **Distinct persona** — Nexus has its own voice: confident, direct, and friendly without being stiff
 
 ---
 
@@ -24,7 +24,7 @@ Built as a portfolio project to demonstrate production-grade AI engineering: Lan
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | AI orchestration | LangGraph.js (ReAct agent) |

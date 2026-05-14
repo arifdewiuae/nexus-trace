@@ -141,6 +141,26 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
         )
         break
 
+      case STREAM_EVENT.MODERATION:
+        if (event.blocked) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content: event.reason } : m))
+          )
+        }
+        setTraceSteps((prev) => [
+          ...prev,
+          {
+            id: `moderation-${assistantId}`,
+            stepType: STEP_TYPE.TOOL,
+            toolName: "content_check",
+            status: event.blocked ? TRACE_STATUS.ERROR : TRACE_STATUS.DONE,
+            durationMs: event.durationMs,
+            startedAt: Date.now() - event.durationMs,
+            endedAt: Date.now(),
+          },
+        ])
+        break
+
       case STREAM_EVENT.TOOL_START:
         setTraceSteps((prev) => [
           ...prev,

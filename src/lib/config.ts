@@ -1,4 +1,5 @@
 export const FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
+export const OPENAI_MODERATION_URL = "https://api.openai.com/v1/moderations"
 export const DEFAULT_MODEL = "accounts/fireworks/models/gpt-oss-20b"
 export const AGENT_TEMPERATURE = 0.3
 export const AGENT_MAX_TOKENS = 2048
@@ -30,6 +31,7 @@ export const MOBILE_BREAKPOINT_PX = 768
 
 export const HEADER_FIREWORKS_KEY = "x-fireworks-key"
 export const HEADER_TAVILY_KEY = "x-tavily-key"
+export const HEADER_OPENAI_KEY = "x-openai-key"
 
 export const SESSION_COOKIE_NAME = "nexus-sid"
 export const MAX_MESSAGE_LENGTH = 4000

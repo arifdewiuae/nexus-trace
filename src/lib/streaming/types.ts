@@ -5,6 +5,7 @@ export const STREAM_EVENT = {
   TOOL_START: "tool_start",
   TOOL_RESULT: "tool_result",
   STEP_END: "step_end",
+  MODERATION: "moderation",
   DONE: "done",
   ERROR: "error",
 } as const
@@ -24,6 +25,8 @@ export type StreamEvent =
       durationMs: number
     }
   | { type: typeof STREAM_EVENT.STEP_END; stepIndex: number }
+  | { type: typeof STREAM_EVENT.MODERATION; durationMs: number; blocked: false }
+  | { type: typeof STREAM_EVENT.MODERATION; durationMs: number; blocked: true; reason: string }
   | {
       type: typeof STREAM_EVENT.DONE
       totalSteps: number

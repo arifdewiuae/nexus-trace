@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration"
 import { ConnectionBanner } from "@/components/pwa/ConnectionBanner"
@@ -36,6 +38,8 @@ export default function RootLayout({
         <ConnectionBanner />
         <TooltipProvider>{children}</TooltipProvider>
         <ServiceWorkerRegistration />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

@@ -1,6 +1,7 @@
 export type ApiKeys = {
   fireworksKey: string
   tavilyKey: string
+  openaiKey?: string
 }
 
 export type TokenUsage = {

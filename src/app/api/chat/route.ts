@@ -9,9 +9,11 @@ import type { ApiKeys } from "@/lib/types"
 import {
   HEADER_FIREWORKS_KEY,
   HEADER_TAVILY_KEY,
+  HEADER_OPENAI_KEY,
   SESSION_COOKIE_NAME,
   MAX_MESSAGE_LENGTH,
 } from "@/lib/config"
+import { checkModeration } from "@/lib/moderation"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -112,19 +114,41 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── Stream response ──────────────────────────────────────────────────────────
-  const stream = generatorToStream(runAgentStream(sanitized, history, resolved.keys), (err) => {
-    const msg = err instanceof Error ? err.message : "Internal server error"
-    return encodeEvent({ type: STREAM_EVENT.ERROR, message: msg })
-  })
-
-  const responseHeaders: Record<string, string> = { ...SSE_HEADERS as Record<string, string> }
-
-  // Set session cookie on new sessions
+  // ── Response headers (shared by both blocked and streamed paths) ────────────
+  const responseHeaders: Record<string, string> = { ...(SSE_HEADERS as Record<string, string>) }
   if (isNew) {
     responseHeaders["Set-Cookie"] =
       `${SESSION_COOKIE_NAME}=${sessionId}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 24 * 365}`
   }
+
+  // ── Content moderation ───────────────────────────────────────────────────────
+  const userOpenaiKey = req.headers.get(HEADER_OPENAI_KEY) ?? undefined
+  const moderationStart = Date.now()
+  const moderation = await checkModeration(sanitized, userOpenaiKey)
+  const moderationDurationMs = Date.now() - moderationStart
+  if (moderation.blocked) {
+    async function* blockedStream(): AsyncGenerator<string> {
+      yield encodeEvent({
+        type: STREAM_EVENT.MODERATION,
+        durationMs: moderationDurationMs,
+        blocked: true,
+        reason: moderation.reason,
+      })
+    }
+    return new Response(generatorToStream(blockedStream(), () => ""), { headers: responseHeaders })
+  }
+
+  // ── Stream response ──────────────────────────────────────────────────────────
+  const resolvedKeys = resolved.keys
+  async function* withModeration(): AsyncGenerator<string> {
+    yield encodeEvent({ type: STREAM_EVENT.MODERATION, durationMs: moderationDurationMs, blocked: false })
+    yield* runAgentStream(sanitized, history, resolvedKeys)
+  }
+
+  const stream = generatorToStream(withModeration(), (err) => {
+    const msg = err instanceof Error ? err.message : "Internal server error"
+    return encodeEvent({ type: STREAM_EVENT.ERROR, message: msg })
+  })
 
   return new Response(stream, { headers: responseHeaders })
 }

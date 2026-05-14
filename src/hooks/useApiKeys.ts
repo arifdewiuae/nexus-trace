@@ -18,6 +18,9 @@ export function useApiKeys() {
   const [keys, setKeysState] = useState<ApiKeys | null>(null)
 
   useEffect(() => {
+    // Intentional: reading localStorage must happen after hydration to avoid
+    // SSR/client mismatch. A lazy useState initializer would cause a hydration warning.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setKeysState(readKeys())
   }, [])
 

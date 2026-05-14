@@ -3,7 +3,7 @@ import { createAgent } from "langchain"
 import { AIMessage, HumanMessage } from "@langchain/core/messages"
 import { createTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
-import { type StreamEvent, STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
+import { STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
 import { MODEL_LABEL, type ApiKeys } from "@/lib/types"
 import {
   FIREWORKS_BASE_URL,

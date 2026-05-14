@@ -18,6 +18,10 @@ function subscribe(cb: () => void) {
   return () => window.removeEventListener("storage", cb)
 }
 
+function notifyStorage() {
+  window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY_API_KEYS }))
+}
+
 export function useApiKeys() {
   // useSyncExternalStore handles SSR (getServerSnapshot → null) and syncs
   // across tabs via the storage event — no useEffect or hydration workaround needed.
@@ -25,12 +29,12 @@ export function useApiKeys() {
 
   const setKeys = useCallback((next: ApiKeys) => {
     localStorage.setItem(STORAGE_KEY_API_KEYS, JSON.stringify(next))
-    window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY_API_KEYS }))
+    notifyStorage()
   }, [])
 
   const clearKeys = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY_API_KEYS)
-    window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY_API_KEYS }))
+    notifyStorage()
   }, [])
 
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_KEYS_ENABLED === "true"

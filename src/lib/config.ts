@@ -1,6 +1,6 @@
 export const FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
 export const OPENAI_MODERATION_URL = "https://api.openai.com/v1/moderations"
-export const DEFAULT_MODEL = "accounts/fireworks/models/gpt-oss-20b"
+export const DEFAULT_MODEL = "accounts/fireworks/models/minimax-m2p7"
 export const AGENT_TEMPERATURE = 0.3
 export const AGENT_MAX_TOKENS = 2048
 
@@ -23,6 +23,8 @@ export const STORAGE_KEY_SESSION_USAGE = "nexus-trace:session-usage"
 export const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
   "accounts/fireworks/models/gpt-oss-120b": { inputPer1M: 0.15, outputPer1M: 0.60 },
   "accounts/fireworks/models/gpt-oss-20b": { inputPer1M: 0.07, outputPer1M: 0.30 },
+  "accounts/fireworks/models/llama-v3p3-70b-instruct": { inputPer1M: 0.20, outputPer1M: 0.80 },
+  "accounts/fireworks/models/minimax-m2p7": { inputPer1M: 0.30, outputPer1M: 1.20 },
 }
 // Fallback for any other model (70B+ serverless tier)
 export const DEFAULT_MODEL_PRICING = { inputPer1M: 0.22, outputPer1M: 0.88 }

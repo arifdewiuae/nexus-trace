@@ -1,11 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useSyncExternalStore } from "react"
 import type { ApiKeys } from "@/lib/types"
 import { STORAGE_KEY_API_KEYS } from "@/lib/config"
 
 function readKeys(): ApiKeys | null {
-  if (typeof window === "undefined") return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY_API_KEYS)
     return raw ? (JSON.parse(raw) as ApiKeys) : null
@@ -14,24 +13,24 @@ function readKeys(): ApiKeys | null {
   }
 }
 
-export function useApiKeys() {
-  const [keys, setKeysState] = useState<ApiKeys | null>(null)
+function subscribe(cb: () => void) {
+  window.addEventListener("storage", cb)
+  return () => window.removeEventListener("storage", cb)
+}
 
-  useEffect(() => {
-    // Intentional: reading localStorage must happen after hydration to avoid
-    // SSR/client mismatch. A lazy useState initializer would cause a hydration warning.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setKeysState(readKeys())
-  }, [])
+export function useApiKeys() {
+  // useSyncExternalStore handles SSR (getServerSnapshot → null) and syncs
+  // across tabs via the storage event — no useEffect or hydration workaround needed.
+  const keys = useSyncExternalStore(subscribe, readKeys, () => null)
 
   const setKeys = useCallback((next: ApiKeys) => {
     localStorage.setItem(STORAGE_KEY_API_KEYS, JSON.stringify(next))
-    setKeysState(next)
+    window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY_API_KEYS }))
   }, [])
 
   const clearKeys = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY_API_KEYS)
-    setKeysState(null)
+    window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY_API_KEYS }))
   }, [])
 
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_KEYS_ENABLED === "true"

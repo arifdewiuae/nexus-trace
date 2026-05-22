@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Square } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MAX_MESSAGE_LENGTH } from "@/lib/config"
+
+// Show the counter only as the user nears the cap, to avoid clutter.
+const COUNTER_VISIBLE_THRESHOLD = MAX_MESSAGE_LENGTH * 0.8
 
 type Props = {
   onSend: (message: string) => void
@@ -22,9 +26,13 @@ export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
     ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
   }, [value])
 
+  const trimmedLength = value.trim().length
+  const isOverLimit = trimmedLength > MAX_MESSAGE_LENGTH
+  const showCounter = trimmedLength >= COUNTER_VISIBLE_THRESHOLD
+
   const handleSend = () => {
     const trimmed = value.trim()
-    if (!trimmed || isStreaming) return
+    if (!trimmed || isStreaming || isOverLimit) return
     onSend(trimmed)
     setValue("")
   }
@@ -51,7 +59,7 @@ export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
         />
         <button
           onClick={isStreaming ? onStop : handleSend}
-          disabled={!isStreaming && (!value.trim() || !hasKeys)}
+          disabled={!isStreaming && (!value.trim() || !hasKeys || isOverLimit)}
           aria-label={isStreaming ? "Stop generation" : "Send message"}
           className={cn(
             "shrink-0 cursor-pointer rounded-lg p-2 transition-colors disabled:opacity-30 disabled:cursor-not-allowed",
@@ -63,9 +71,17 @@ export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
           {isStreaming ? <Square className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
         </button>
       </div>
-      <p className="text-muted-foreground mt-1.5 text-center text-xs">
-        Enter to send · Shift+Enter for newline
-      </p>
+      <div className="mt-1.5 flex items-center justify-center gap-2 text-xs">
+        <span className="text-muted-foreground">Enter to send · Shift+Enter for newline</span>
+        {showCounter && (
+          <span
+            aria-live="polite"
+            className={cn("tabular-nums", isOverLimit ? "text-destructive" : "text-muted-foreground")}
+          >
+            {trimmedLength.toLocaleString()}/{MAX_MESSAGE_LENGTH.toLocaleString()}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

@@ -3,16 +3,20 @@ import type { NextConfig } from "next"
 const SELF = "'self'"
 const UNSAFE_INLINE = "'unsafe-inline'"
 const UNSAFE_EVAL = "'unsafe-eval'"
+// Vercel Analytics + Speed Insights load their script and send beacons here.
+// (In production on Vercel these are proxied same-origin via /_vercel/*, but the
+// dev/self-hosted scripts come straight from this domain.)
+const VERCEL_INSIGHTS = "https://va.vercel-scripts.com"
 const isDev = process.env.NODE_ENV === "development"
 
 const csp = [
   `default-src ${SELF}`,
   // React dev mode requires eval() for stack-trace reconstruction; omitted in production
-  `script-src ${SELF} ${UNSAFE_INLINE}${isDev ? ` ${UNSAFE_EVAL}` : ""}`,
+  `script-src ${SELF} ${UNSAFE_INLINE} ${VERCEL_INSIGHTS}${isDev ? ` ${UNSAFE_EVAL}` : ""}`,
   `style-src ${SELF} ${UNSAFE_INLINE}`,    // Tailwind inline styles
   `font-src ${SELF}`,
   `img-src ${SELF} data:`,
-  `connect-src ${SELF}`,                   // SSE to /api/chat; all LLM/search calls are server-side
+  `connect-src ${SELF} ${VERCEL_INSIGHTS}`, // SSE to /api/chat (same-origin); Vercel insights beacons
   `frame-ancestors 'none'`,
 ].join("; ")
 

@@ -42,7 +42,11 @@ async function checkOpenAIModeration(text: string, userKey?: string): Promise<Mo
       body: JSON.stringify({ input: text }),
     })
 
-    if (!res.ok) return { blocked: false, reason: "" }
+    if (!res.ok) {
+      // Fail open, but make the bypass visible so prolonged outages are alertable.
+      console.warn(`[moderation] OpenAI moderation returned ${res.status}; failing open`)
+      return { blocked: false, reason: "" }
+    }
 
     const data = (await res.json()) as {
       results?: { flagged?: boolean }[]
@@ -51,8 +55,9 @@ async function checkOpenAIModeration(text: string, userKey?: string): Promise<Mo
     if (data.results?.[0]?.flagged) {
       return { blocked: true, reason: "Message flagged for inappropriate content." }
     }
-  } catch {
+  } catch (err) {
     // Fail open — don't block users if the moderation service is unavailable.
+    console.warn("[moderation] OpenAI moderation unreachable; failing open:", err)
   }
 
   return { blocked: false, reason: "" }

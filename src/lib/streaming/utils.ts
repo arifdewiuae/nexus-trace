@@ -13,8 +13,13 @@ export function generatorToStream(
           controller.enqueue(encoder.encode(chunk))
         }
       } catch (err) {
+        console.error("[generatorToStream] generator threw:", err)
         if (onError) {
-          controller.enqueue(encoder.encode(onError(err)))
+          try {
+            controller.enqueue(encoder.encode(onError(err)))
+          } catch (handlerErr) {
+            console.error("[generatorToStream] onError handler threw:", handlerErr)
+          }
         }
       } finally {
         controller.close()

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server"
 import { cookies } from "next/headers"
 import { randomUUID } from "crypto"
+import { z } from "zod"
 import { runAgentStream } from "@/lib/agent/graph"
 import { encodeEvent, STREAM_EVENT } from "@/lib/streaming/types"
 import { generatorToStream } from "@/lib/streaming/utils"
@@ -24,6 +25,22 @@ const SSE_HEADERS: HeadersInit = {
   Connection: "keep-alive",
   "X-Accel-Buffering": "no",
 }
+
+const ChatRequestSchema = z.object({
+  message: z
+    .string()
+    // Strip null bytes and surrounding whitespace before length/emptiness checks.
+    .transform((s) => s.replace(/\0/g, "").trim())
+    .pipe(
+      z
+        .string()
+        .min(1, "'message' is required and must be a non-empty string")
+        .max(MAX_MESSAGE_LENGTH, `Message exceeds ${MAX_MESSAGE_LENGTH} character limit`)
+    ),
+  history: z
+    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
+    .default([]),
+})
 
 interface ResolvedKeys {
   keys: ApiKeys
@@ -60,34 +77,22 @@ export async function POST(req: NextRequest) {
   // ── Session ─────────────────────────────────────────────────────────────────
   const { sessionId, isNew } = await getOrCreateSession()
 
-  // ── Parse body ───────────────────────────────────────────────────────────────
-  let message: string
-  let history: { role: string; content: string }[] = []
-
+  // ── Parse + validate body ─────────────────────────────────────────────────────
+  let rawBody: unknown
   try {
-    const body = await req.json()
-    message = body?.message
-    history = Array.isArray(body?.history) ? body.history : []
+    rawBody = await req.json()
   } catch {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  // ── Input validation ─────────────────────────────────────────────────────────
-  if (!message || typeof message !== "string" || !message.trim()) {
+  const parsed = ChatRequestSchema.safeParse(rawBody)
+  if (!parsed.success) {
     return Response.json(
-      { error: "'message' is required and must be a non-empty string" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid request body" },
       { status: 400 }
     )
   }
-
-  // Strip null bytes, enforce length cap
-  const sanitized = message.replace(/\0/g, "").trim()
-  if (sanitized.length > MAX_MESSAGE_LENGTH) {
-    return Response.json(
-      { error: `Message exceeds ${MAX_MESSAGE_LENGTH} character limit` },
-      { status: 400 }
-    )
-  }
+  const { message: sanitized, history } = parsed.data
 
   // ── Key resolution ───────────────────────────────────────────────────────────
   const resolved = resolveKeys(req)

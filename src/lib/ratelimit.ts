@@ -41,10 +41,20 @@ interface InMemoryBucket {
 
 function makeInMemoryLimiter(max: number) {
   const buckets = new Map<string, InMemoryBucket>()
+  const windowMs = RATE_LIMIT_WINDOW_S * 1000
+
+  // Evict expired buckets so the Map can't grow unbounded across long-lived
+  // server processes. `unref` keeps this timer from holding the event loop open.
+  const sweep = setInterval(() => {
+    const now = Date.now()
+    for (const [id, bucket] of buckets) {
+      if (now >= bucket.resetAt) buckets.delete(id)
+    }
+  }, windowMs)
+  sweep.unref?.()
 
   return async (id: string): Promise<RateLimitResult> => {
     const now = Date.now()
-    const windowMs = RATE_LIMIT_WINDOW_S * 1000
     let bucket = buckets.get(id)
 
     if (!bucket || now >= bucket.resetAt) {

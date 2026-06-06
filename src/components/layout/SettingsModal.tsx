@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { X, Eye, EyeOff, ExternalLink } from "lucide-react"
+import { X } from "lucide-react"
 import type { ApiKeys } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { FIREWORKS_KEYS_URL, TAVILY_KEYS_URL, OPENAI_KEYS_URL } from "@/lib/config"
+import { ApiKeyInput } from "./ApiKeyInput"
 
 type Props = {
   keys: ApiKeys | null
@@ -16,9 +18,6 @@ export function SettingsModal({ keys, onSave, onClear, onClose }: Props) {
   const [fireworksKey, setFireworksKey] = useState(keys?.fireworksKey ?? "")
   const [tavilyKey, setTavilyKey] = useState(keys?.tavilyKey ?? "")
   const [openaiKey, setOpenaiKey] = useState(keys?.openaiKey ?? "")
-  const [showFireworks, setShowFireworks] = useState(false)
-  const [showTavily, setShowTavily] = useState(false)
-  const [showOpenai, setShowOpenai] = useState(false)
 
   const canSave = fireworksKey.trim().length > 0 && tavilyKey.trim().length > 0
 
@@ -77,110 +76,33 @@ export function SettingsModal({ keys, onSave, onClear, onClose }: Props) {
             never touch any database.
           </p>
 
-          {/* Fireworks Key */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Fireworks AI key</label>
-              <a
-                href="https://app.fireworks.ai/settings/users/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-              >
-                Get a key <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            <div className="border-input bg-background focus-within:border-ring flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
-              <input
-                type={showFireworks ? "text" : "password"}
-                value={fireworksKey}
-                onChange={(e) => setFireworksKey(e.target.value)}
-                placeholder="fw_..."
-                className="placeholder:text-muted-foreground/50 min-w-0 flex-1 bg-transparent text-sm outline-none"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                onClick={() => setShowFireworks((v) => !v)}
-                aria-label={showFireworks ? "Hide Fireworks key" : "Show Fireworks key"}
-                className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
-              >
-                {showFireworks ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
+          <ApiKeyInput
+            label="Fireworks AI key"
+            name="Fireworks"
+            value={fireworksKey}
+            onChange={setFireworksKey}
+            placeholder="fw_..."
+            getKeyUrl={FIREWORKS_KEYS_URL}
+          />
 
-          {/* Tavily Key */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Tavily API key</label>
-              <a
-                href="https://app.tavily.com/home"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-              >
-                Get a key <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            <div className="border-input bg-background focus-within:border-ring flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
-              <input
-                type={showTavily ? "text" : "password"}
-                value={tavilyKey}
-                onChange={(e) => setTavilyKey(e.target.value)}
-                placeholder="tvly-..."
-                className="placeholder:text-muted-foreground/50 min-w-0 flex-1 bg-transparent text-sm outline-none"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                onClick={() => setShowTavily((v) => !v)}
-                aria-label={showTavily ? "Hide Tavily key" : "Show Tavily key"}
-                className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
-              >
-                {showTavily ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
+          <ApiKeyInput
+            label="Tavily API key"
+            name="Tavily"
+            value={tavilyKey}
+            onChange={setTavilyKey}
+            placeholder="tvly-..."
+            getKeyUrl={TAVILY_KEYS_URL}
+          />
 
-          {/* OpenAI Key (optional) */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">
-                OpenAI key{" "}
-                <span className="text-muted-foreground font-normal">(optional - content moderation)</span>
-              </label>
-              <a
-                href="https://platform.openai.com/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-              >
-                Get a key <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            <div className="border-input bg-background focus-within:border-ring flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
-              <input
-                type={showOpenai ? "text" : "password"}
-                value={openaiKey}
-                onChange={(e) => setOpenaiKey(e.target.value)}
-                placeholder="sk-..."
-                className="placeholder:text-muted-foreground/50 min-w-0 flex-1 bg-transparent text-sm outline-none"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                onClick={() => setShowOpenai((v) => !v)}
-                aria-label={showOpenai ? "Hide OpenAI key" : "Show OpenAI key"}
-                className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
-              >
-                {showOpenai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
+          <ApiKeyInput
+            label="OpenAI key"
+            name="OpenAI"
+            value={openaiKey}
+            onChange={setOpenaiKey}
+            placeholder="sk-..."
+            getKeyUrl={OPENAI_KEYS_URL}
+            note="(optional - content moderation)"
+          />
         </div>
 
         {/* Footer */}

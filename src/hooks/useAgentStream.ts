@@ -209,6 +209,7 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
       const messages = event.truncated
         ? state.messages.map((m) => (m.id === assistantId ? { ...m, truncated: true } : m))
         : state.messages
+
       const base = {
         ...state,
         messages,
@@ -216,12 +217,14 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
         ttftMs: event.ttftMs ?? null,
       }
       if (event.inputTokens == null || event.outputTokens == null) return base
+
       const usage: TokenUsage = {
         inputTokens: event.inputTokens,
         outputTokens: event.outputTokens,
         totalTokens: event.inputTokens + event.outputTokens,
       }
       const cost = event.estimatedCostUsd ?? null
+
       return {
         ...base,
         queryUsage: usage,

@@ -16,7 +16,10 @@ export function MessageList({ messages, onPromptSelect }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    // Smooth-scroll when a message is added, but jump instantly while tokens stream in —
+    // otherwise every token kicks off a fresh smooth-scroll and the view janks.
+    const isStreaming = messages[messages.length - 1]?.isStreaming
+    bottomRef.current?.scrollIntoView({ behavior: isStreaming ? "auto" : "smooth" })
   }, [messages])
 
   if (messages.length === 0) {

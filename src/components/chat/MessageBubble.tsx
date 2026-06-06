@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { remarkNoTables } from "@/lib/remark-no-tables"
@@ -7,6 +8,7 @@ import type { ComponentPropsWithoutRef, AnchorHTMLAttributes } from "react"
 import type { Message } from "@/lib/types"
 import { cn, normaliseBr } from "@/lib/utils"
 import { MOBILE_BREAKPOINT_PX } from "@/lib/config"
+import { LoadingDots } from "@/components/ui/LoadingDots"
 import { CodeBlock } from "./CodeBlock"
 
 // Evaluated once on the client at module load — mobile gets list view, desktop gets tables.
@@ -45,7 +47,9 @@ const proseClasses = `prose prose-invert prose-sm max-w-none
 
 type Props = { message: Message }
 
-export function MessageBubble({ message }: Props) {
+// Memoized so a streaming token (which replaces the messages array) only re-renders the
+// active bubble — prior bubbles keep a stable `message` reference and skip re-rendering.
+function MessageBubbleComponent({ message }: Props) {
   const isUser = message.role === "user"
 
   return (
@@ -66,15 +70,7 @@ export function MessageBubble({ message }: Props) {
             )}
           </span>
         ) : message.isStreaming && !message.content ? (
-          <div className="flex items-center gap-1 py-0.5">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="bg-muted-foreground/50 h-1.5 w-1.5 rounded-full"
-                style={{ animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}
-              />
-            ))}
-          </div>
+          <LoadingDots className="gap-1 py-0.5" dotClassName="bg-muted-foreground/50" />
         ) : (
           <div className={proseClasses}>
             <ReactMarkdown remarkPlugins={remarkPlugins} components={tableComponents as object}>
@@ -94,3 +90,5 @@ export function MessageBubble({ message }: Props) {
     </div>
   )
 }
+
+export const MessageBubble = memo(MessageBubbleComponent)

@@ -6,7 +6,7 @@ import { runAgentStream } from "@/lib/agent/graph"
 import { encodeEvent, STREAM_EVENT } from "@/lib/streaming/types"
 import { generatorToStream } from "@/lib/streaming/utils"
 import { checkRateLimit } from "@/lib/ratelimit"
-import type { ApiKeys } from "@/lib/types"
+import { type ApiKeys, MESSAGE_ROLE } from "@/lib/types"
 import {
   HEADER_FIREWORKS_KEY,
   HEADER_TAVILY_KEY,
@@ -39,7 +39,7 @@ const ChatRequestSchema = z.object({
         .max(MAX_MESSAGE_LENGTH, `Message exceeds ${MAX_MESSAGE_LENGTH} character limit`)
     ),
   history: z
-    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
+    .array(z.object({ role: z.enum([MESSAGE_ROLE.USER, MESSAGE_ROLE.ASSISTANT]), content: z.string() }))
     .default([]),
 })
 

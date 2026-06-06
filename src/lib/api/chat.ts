@@ -1,7 +1,7 @@
-import type { ApiKeys } from "@/lib/types"
+import type { ApiKeys, MessageRole } from "@/lib/types"
 import { HEADER_FIREWORKS_KEY, HEADER_TAVILY_KEY, HEADER_OPENAI_KEY } from "@/lib/config"
 
-export type HistoryMessage = { role: "user" | "assistant"; content: string }
+export type HistoryMessage = { role: MessageRole; content: string }
 
 export async function streamChat(
   content: string,

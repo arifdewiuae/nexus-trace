@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { remarkNoTables } from "@/lib/remark-no-tables"
 import type { ComponentPropsWithoutRef, AnchorHTMLAttributes } from "react"
-import type { Message } from "@/lib/types"
+import { type Message, MESSAGE_ROLE } from "@/lib/types"
 import { cn, normaliseBr } from "@/lib/utils"
 import { MOBILE_BREAKPOINT_PX } from "@/lib/config"
 import { LoadingDots } from "@/components/ui/LoadingDots"
@@ -50,7 +50,7 @@ type Props = { message: Message }
 // Memoized so a streaming token (which replaces the messages array) only re-renders the
 // active bubble — prior bubbles keep a stable `message` reference and skip re-rendering.
 function MessageBubbleComponent({ message }: Props) {
-  const isUser = message.role === "user"
+  const isUser = message.role === MESSAGE_ROLE.USER
 
   return (
     <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>

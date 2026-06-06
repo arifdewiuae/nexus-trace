@@ -4,7 +4,7 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages"
 import { createTools } from "./tools"
 import { AGENT_SYSTEM_PROMPT } from "./state"
 import { STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
-import { MODEL_LABEL, type ApiKeys } from "@/lib/types"
+import { MODEL_LABEL, MESSAGE_ROLE, type ApiKeys } from "@/lib/types"
 import {
   FIREWORKS_BASE_URL,
   DEFAULT_MODEL,
@@ -227,7 +227,7 @@ export async function* runAgentStream(
   const ctx = createRunContext(modelId)
 
   const historyMessages = trimHistory(history).map((m) =>
-    m.role === "user" ? new HumanMessage(m.content) : new AIMessage(m.content)
+    m.role === MESSAGE_ROLE.USER ? new HumanMessage(m.content) : new AIMessage(m.content)
   )
 
   const eventStream = graph.streamEvents(

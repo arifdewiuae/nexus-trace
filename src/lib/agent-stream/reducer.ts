@@ -1,5 +1,5 @@
 import type { Message, TraceStep, TokenUsage } from "@/lib/types"
-import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
+import { TRACE_STATUS, STEP_TYPE, MESSAGE_ROLE } from "@/lib/types"
 import { STREAM_EVENT, type StreamEvent } from "@/lib/streaming/types"
 
 // ── Action types ──────────────────────────────────────────────────────────────
@@ -221,8 +221,8 @@ export function reducer(state: AgentState, action: Action): AgentState {
         ...state,
         messages: [
           ...state.messages,
-          { id: action.userId, role: "user", content: action.content },
-          { id: action.assistantId, role: "assistant", content: "", isStreaming: true },
+          { id: action.userId, role: MESSAGE_ROLE.USER, content: action.content },
+          { id: action.assistantId, role: MESSAGE_ROLE.ASSISTANT, content: "", isStreaming: true },
         ],
         traceSteps:
           state.traceSteps.length > 0

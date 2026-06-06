@@ -11,7 +11,7 @@ import { loadPersisted, persistState } from "@/lib/agent-stream/storage"
 export function useAgentStream(apiKeys?: ApiKeys | null) {
   const [state, dispatch] = useReducer(reducer, undefined, emptyState)
   const abortRef = useRef<AbortController | null>(null)
-  const messagesRef = useRef<Message[]>(state.messages)
+  const messagesRef = useRef<readonly Message[]>(state.messages)
   const apiKeysRef = useRef(apiKeys)
 
   useEffect(() => {

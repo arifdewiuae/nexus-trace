@@ -27,21 +27,24 @@ export type Action =
 
 export const EMPTY_USAGE: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
 
+// `readonly` throughout: the reducer only ever returns fresh objects/arrays, and these
+// modifiers turn any accidental in-place mutation (state.x = …, messages.push(…)) into a
+// compile error.
 export interface AgentState {
-  messages: Message[]
-  traceSteps: TraceStep[]
-  isStreaming: boolean
-  totalLatencyMs: number | null
-  ttftMs: number | null
-  queryUsage: TokenUsage | null
-  queryCostUsd: number | null
-  sessionUsage: TokenUsage
-  sessionCostUsd: number
-  error: string | null
+  readonly messages: readonly Message[]
+  readonly traceSteps: readonly TraceStep[]
+  readonly isStreaming: boolean
+  readonly totalLatencyMs: number | null
+  readonly ttftMs: number | null
+  readonly queryUsage: TokenUsage | null
+  readonly queryCostUsd: number | null
+  readonly sessionUsage: TokenUsage
+  readonly sessionCostUsd: number
+  readonly error: string | null
   // False until the post-mount hydrate runs. Persisted state is intentionally
   // NOT read during render so the first client render matches SSR (empty),
   // avoiding a hydration mismatch.
-  hydrated: boolean
+  readonly hydrated: boolean
 }
 
 export type PersistedState = Pick<
@@ -68,9 +71,9 @@ export function emptyState(): AgentState {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 // Immutably patch the one item matching `id`, leaving the others referentially stable
-// (so memoized children that didn't change skip re-rendering).
-function patchById<T extends { id: string }>(
-  items: T[],
+// (so memoized children that didn't change skip re-rendering). Exported for unit testing.
+export function patchById<T extends { id: string }>(
+  items: readonly T[],
   id: string,
   patch: Partial<T> | ((item: T) => Partial<T>)
 ): T[] {

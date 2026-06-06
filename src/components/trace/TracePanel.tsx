@@ -5,7 +5,7 @@ import { SessionStats } from "./SessionStats"
 import { TraceStepList } from "./TraceStepList"
 
 type Props = {
-  steps: TraceStep[]
+  steps: readonly TraceStep[]
   isStreaming: boolean
   totalLatencyMs: number | null
   ttftMs?: number | null

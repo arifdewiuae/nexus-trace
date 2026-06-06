@@ -7,7 +7,7 @@ import { MessageBubble } from "./MessageBubble"
 import { EmptyState } from "./EmptyState"
 
 type Props = {
-  messages: Message[]
+  messages: readonly Message[]
   onPromptSelect: (prompt: string) => void
 }
 

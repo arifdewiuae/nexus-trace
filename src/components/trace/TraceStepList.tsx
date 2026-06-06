@@ -7,7 +7,7 @@ import { LoadingDots } from "@/components/ui/LoadingDots"
 import { TraceStepCard } from "./TraceStepCard"
 
 type Props = {
-  steps: TraceStep[]
+  steps: readonly TraceStep[]
   isStreaming: boolean
 }
 

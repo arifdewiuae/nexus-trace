@@ -50,6 +50,7 @@ function createModel(fireworksKey: string) {
 
 export function trimHistory(history: { role: string; content: string }[]) {
   const maxMessages = HISTORY_MAX_TURNS * 2
+
   return history.slice(-maxMessages).map((m) =>
     m.content.length > HISTORY_MAX_CHARS_PER_MESSAGE
       ? { ...m, content: m.content.slice(0, HISTORY_MAX_CHARS_PER_MESSAGE) + "…" }
@@ -80,6 +81,7 @@ function extractTokenUsage(data: unknown): { input: number; output: number } {
   const output = (data as { output?: ModelEndOutput })?.output
   const usage = output?.usage_metadata
   const tokenUsage = output?.response_metadata?.token_usage
+
   if (!usage && !tokenUsage) {
     console.warn("[graph] no token usage in model-end event; cost will under-count")
     return { input: 0, output: 0 }
@@ -124,11 +126,13 @@ function* onModelStream(ctx: RunContext, runId: string, data: unknown): Generato
   // Reasoning tokens stream separately from the answer (often before any content) — accumulate
   // them per model call so the trace can show the model's thinking without leaking it into the reply.
   const reasoningDelta = chunk?.additional_kwargs?.reasoning_content ?? chunk?.additional_kwargs?.reasoning
+
   if (typeof reasoningDelta === "string" && reasoningDelta.length > 0) {
     ctx.reasoningByRun.set(runId, (ctx.reasoningByRun.get(runId) ?? "") + reasoningDelta)
   }
   const content = chunk?.content
   const toolCallChunks = chunk?.tool_call_chunks ?? []
+
   if (typeof content === "string" && content.length > 0 && toolCallChunks.length === 0) {
     if (!ctx.modelHasTokens.has(runId)) {
       ctx.modelHasTokens.add(runId)
@@ -141,17 +145,21 @@ function* onModelStream(ctx: RunContext, runId: string, data: unknown): Generato
 
 function* onModelEnd(ctx: RunContext, runId: string, data: unknown): Generator<string> {
   const durationMs = Date.now() - (ctx.modelStartTimes.get(runId) ?? Date.now())
+
   ctx.modelStartTimes.delete(runId)
   ctx.modelHasTokens.delete(runId)
   const usage = extractTokenUsage(data)
+
   ctx.totalInputTokens += usage.input
   ctx.totalOutputTokens += usage.output
   const output = (data as { output?: ModelEndOutput })?.output
+
   if (output?.response_metadata?.finish_reason === "length") ctx.truncated = true
   // Prefer the streamed reasoning; fall back to a non-streamed reasoning_content on the final message.
   const streamed = ctx.reasoningByRun.get(runId)
   ctx.reasoningByRun.delete(runId)
   const reasoning = (streamed ?? output?.additional_kwargs?.reasoning_content ?? output?.additional_kwargs?.reasoning)?.trim()
+
   yield encodeEvent({
     type: STREAM_EVENT.MODEL_END,
     modelCallId: runId,
@@ -162,6 +170,7 @@ function* onModelEnd(ctx: RunContext, runId: string, data: unknown): Generator<s
 
 function* onToolStart(ctx: RunContext, runId: string, name: string | undefined, data: unknown): Generator<string> {
   ctx.toolStartTimes.set(runId, Date.now())
+
   yield encodeEvent({
     type: STREAM_EVENT.TOOL_START,
     toolName: name ?? "unknown",
@@ -173,6 +182,7 @@ function* onToolStart(ctx: RunContext, runId: string, name: string | undefined, 
 function* onToolEnd(ctx: RunContext, runId: string, name: string | undefined, data: unknown): Generator<string> {
   const durationMs = Date.now() - (ctx.toolStartTimes.get(runId) ?? Date.now())
   ctx.toolStartTimes.delete(runId)
+
   yield encodeEvent({
     type: STREAM_EVENT.TOOL_RESULT,
     toolName: name ?? "unknown",
@@ -180,12 +190,14 @@ function* onToolEnd(ctx: RunContext, runId: string, name: string | undefined, da
     result: extractToolResult((data as { output?: unknown })?.output),
     durationMs,
   })
+
   ctx.stepIndex++
   yield encodeEvent({ type: STREAM_EVENT.STEP_END, stepIndex: ctx.stepIndex })
 }
 
 function* buildDoneEvent(ctx: RunContext): Generator<string> {
   const hasUsage = ctx.totalInputTokens + ctx.totalOutputTokens > 0
+  
   yield encodeEvent({
     type: STREAM_EVENT.DONE,
     totalSteps: ctx.stepIndex,

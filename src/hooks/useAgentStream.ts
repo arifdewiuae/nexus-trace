@@ -81,8 +81,6 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     isStreaming: state.isStreaming,
     totalLatencyMs: state.totalLatencyMs,
     ttftMs: state.ttftMs,
-    queryUsage: state.queryUsage,
-    queryCostUsd: state.queryCostUsd,
     sessionUsage: state.sessionUsage,
     sessionCostUsd: state.sessionCostUsd,
     error: state.error,

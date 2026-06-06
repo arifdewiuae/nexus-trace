@@ -106,11 +106,10 @@ describe("reducer", () => {
     expect(s.traceSteps[0]).toMatchObject({ status: TRACE_STATUS.DONE, durationMs: 9, reasoning: "thinking…" })
   })
 
-  it("done aggregates query usage into the session totals", () => {
+  it("done aggregates usage into the session totals", () => {
     let s = started()
     s = dispatch(s, evt({ type: STREAM_EVENT.DONE, totalSteps: 1, latencyMs: 100, inputTokens: 10, outputTokens: 5, estimatedCostUsd: 0.001 }))
-    expect(s.queryUsage).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15 })
-    expect(s.sessionUsage.totalTokens).toBe(15)
+    expect(s.sessionUsage).toEqual({ inputTokens: 10, outputTokens: 5, totalTokens: 15 })
     expect(s.sessionCostUsd).toBeCloseTo(0.001)
     expect(s.totalLatencyMs).toBe(100)
   })

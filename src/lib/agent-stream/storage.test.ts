@@ -18,7 +18,6 @@ describe("agent-stream storage", () => {
     const p = loadPersisted()
     expect(p.messages).toEqual([])
     expect(p.traceSteps).toEqual([])
-    expect(p.queryUsage).toBeNull()
     expect(p.sessionUsage).toEqual({ inputTokens: 0, outputTokens: 0, totalTokens: 0 })
     expect(p.sessionCostUsd).toBe(0)
   })

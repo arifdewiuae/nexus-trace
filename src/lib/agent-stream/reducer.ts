@@ -36,8 +36,6 @@ export interface AgentState {
   readonly isStreaming: boolean
   readonly totalLatencyMs: number | null
   readonly ttftMs: number | null
-  readonly queryUsage: TokenUsage | null
-  readonly queryCostUsd: number | null
   readonly sessionUsage: TokenUsage
   readonly sessionCostUsd: number
   readonly error: string | null
@@ -49,7 +47,7 @@ export interface AgentState {
 
 export type PersistedState = Pick<
   AgentState,
-  "messages" | "traceSteps" | "queryUsage" | "queryCostUsd" | "sessionUsage" | "sessionCostUsd"
+  "messages" | "traceSteps" | "sessionUsage" | "sessionCostUsd"
 >
 
 export function emptyState(): AgentState {
@@ -59,8 +57,6 @@ export function emptyState(): AgentState {
     isStreaming: false,
     totalLatencyMs: null,
     ttftMs: null,
-    queryUsage: null,
-    queryCostUsd: null,
     sessionUsage: EMPTY_USAGE,
     sessionCostUsd: 0,
     error: null,
@@ -192,8 +188,6 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
 
       return {
         ...base,
-        queryUsage: usage,
-        queryCostUsd: cost,
         sessionUsage: {
           inputTokens: state.sessionUsage.inputTokens + usage.inputTokens,
           outputTokens: state.sessionUsage.outputTokens + usage.outputTokens,
@@ -240,8 +234,6 @@ export function reducer(state: AgentState, action: Action): AgentState {
         isStreaming: true,
         totalLatencyMs: null,
         ttftMs: null,
-        queryUsage: null,
-        queryCostUsd: null,
         error: null,
       }
 

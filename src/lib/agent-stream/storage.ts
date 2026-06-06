@@ -3,7 +3,6 @@ import {
   STORAGE_KEY_MESSAGES,
   STORAGE_KEY_TRACE_STEPS,
   STORAGE_KEY_SESSION_USAGE,
-  STORAGE_KEY_QUERY_USAGE,
 } from "@/lib/config"
 import { EMPTY_USAGE, type AgentState, type PersistedState } from "./reducer"
 
@@ -25,10 +24,6 @@ function writeStorage(key: string, value: unknown | null) {
 
 // Read persisted conversation state from sessionStorage (post-mount, never during render).
 export function loadPersisted(): PersistedState {
-  const query = readStorage<{ usage: TokenUsage; costUsd: number | null } | null>(
-    STORAGE_KEY_QUERY_USAGE,
-    null
-  )
   const session = readStorage<{ usage: TokenUsage; costUsd: number } | null>(
     STORAGE_KEY_SESSION_USAGE,
     null
@@ -39,8 +34,6 @@ export function loadPersisted(): PersistedState {
       isStreaming: false,
     })),
     traceSteps: readStorage<TraceStep[]>(STORAGE_KEY_TRACE_STEPS, []),
-    queryUsage: query?.usage ?? null,
-    queryCostUsd: query?.costUsd ?? null,
     sessionUsage: session?.usage ?? EMPTY_USAGE,
     sessionCostUsd: session?.costUsd ?? 0,
   }
@@ -50,10 +43,6 @@ export function loadPersisted(): PersistedState {
 export function persistState(state: AgentState) {
   writeStorage(STORAGE_KEY_MESSAGES, state.messages)
   writeStorage(STORAGE_KEY_TRACE_STEPS, state.traceSteps)
-  writeStorage(
-    STORAGE_KEY_QUERY_USAGE,
-    state.queryUsage === null ? null : { usage: state.queryUsage, costUsd: state.queryCostUsd }
-  )
   writeStorage(
     STORAGE_KEY_SESSION_USAGE,
     state.sessionUsage.totalTokens > 0

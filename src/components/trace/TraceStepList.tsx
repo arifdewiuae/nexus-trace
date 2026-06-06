@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { AnimatePresence } from "framer-motion"
 import type { TraceStep } from "@/lib/types"
 import { STEP_TYPE } from "@/lib/types"
@@ -13,6 +14,14 @@ type Props = {
 
 // The scrollable list of trace steps, with an empty/loading placeholder.
 export function TraceStepList({ steps, isStreaming }: Props) {
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Keep the latest step in view — instant while streaming, smooth on reload/new step.
+  // Matches the message list so both panes land at the bottom after a page reload.
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: isStreaming ? "auto" : "smooth" })
+  }, [steps, isStreaming])
+
   if (steps.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -36,6 +45,7 @@ export function TraceStepList({ steps, isStreaming }: Props) {
           return <TraceStepCard key={step.id} step={step} index={i} nextTool={nextTool} />
         })}
       </AnimatePresence>
+      <div ref={bottomRef} />
     </div>
   )
 }

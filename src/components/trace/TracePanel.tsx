@@ -1,6 +1,5 @@
 import type { TraceStep, TokenUsage } from "@/lib/types"
 import { TracePanelHeader } from "./TracePanelHeader"
-import { QueryStats } from "./QueryStats"
 import { SessionStats } from "./SessionStats"
 import { TraceStepList } from "./TraceStepList"
 
@@ -9,8 +8,6 @@ type Props = {
   isStreaming: boolean
   totalLatencyMs: number | null
   ttftMs?: number | null
-  queryUsage?: TokenUsage | null
-  queryCostUsd?: number | null
   sessionUsage?: TokenUsage
   sessionCostUsd?: number
 }
@@ -20,8 +17,6 @@ export function TracePanel({
   isStreaming,
   totalLatencyMs,
   ttftMs,
-  queryUsage,
-  queryCostUsd,
   sessionUsage,
   sessionCostUsd,
 }: Props) {
@@ -35,8 +30,6 @@ export function TracePanel({
         totalLatencyMs={totalLatencyMs}
         ttftMs={ttftMs}
       />
-
-      {queryUsage && !isStreaming && <QueryStats usage={queryUsage} costUsd={queryCostUsd} />}
 
       <TraceStepList steps={steps} isStreaming={isStreaming} />
 

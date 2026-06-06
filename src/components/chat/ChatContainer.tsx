@@ -18,8 +18,6 @@ export function ChatContainer() {
     isStreaming,
     totalLatencyMs,
     ttftMs,
-    queryUsage,
-    queryCostUsd,
     sessionUsage,
     sessionCostUsd,
     error,
@@ -72,8 +70,6 @@ export function ChatContainer() {
               isStreaming={isStreaming}
               totalLatencyMs={totalLatencyMs}
               ttftMs={ttftMs}
-              queryUsage={queryUsage}
-              queryCostUsd={queryCostUsd}
               sessionUsage={sessionUsage}
               sessionCostUsd={sessionCostUsd}
             />

@@ -9,16 +9,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # start dev server on :5173
-npm run build        # production build (also runs tsc)
-npm run lint         # ESLint (flat config, Next.js + TypeScript + Prettier rules)
-npm run lint:fix     # ESLint with --fix
-npm run format       # Prettier write (sorts Tailwind classes via prettier-plugin-tailwindcss)
-npm run format:check # Prettier check (used in CI)
-npx tsc --noEmit     # type-check without emitting
+pnpm dev             # start dev server on :3000
+pnpm build           # production build (also runs tsc)
+pnpm lint            # ESLint (flat config, Next.js + TypeScript + Prettier rules)
+pnpm lint:fix        # ESLint with --fix
+pnpm format          # Prettier write (sorts Tailwind classes via prettier-plugin-tailwindcss)
+pnpm format:check    # Prettier check (used in CI)
+pnpm test            # Vitest unit tests
+pnpm exec tsc --noEmit  # type-check without emitting
 ```
 
-Tests are not yet set up (Task 9 — Vitest). When added, the command will be `npm test`.
+This repo uses **pnpm** (see `packageManager` in `package.json`). Build-script approvals
+for native deps live in `pnpm-workspace.yaml` under `allowBuilds`.
 
 ## Environment Variables
 

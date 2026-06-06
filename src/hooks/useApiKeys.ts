@@ -4,13 +4,32 @@ import { useCallback, useSyncExternalStore } from "react"
 import type { ApiKeys } from "@/lib/types"
 import { STORAGE_KEY_API_KEYS } from "@/lib/config"
 
+// useSyncExternalStore requires a referentially-stable snapshot: parsing on every call
+// would return a fresh object each render and re-render-loop. Cache by the raw string and
+// only re-parse when it actually changes.
+let cachedRaw: string | null = null
+let cachedKeys: ApiKeys | null = null
+
 function readKeys(): ApiKeys | null {
+  if (typeof window === "undefined") return null
+
+  let raw: string | null
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_API_KEYS)
-    return raw ? (JSON.parse(raw) as ApiKeys) : null
-  } catch {
+    raw = localStorage.getItem(STORAGE_KEY_API_KEYS)
+  } catch (err) {
+    console.warn("[useApiKeys] could not read API keys from localStorage:", err)
     return null
   }
+
+  if (raw === cachedRaw) return cachedKeys
+  cachedRaw = raw
+  try {
+    cachedKeys = raw ? (JSON.parse(raw) as ApiKeys) : null
+  } catch (err) {
+    console.warn("[useApiKeys] stored API keys are corrupt; ignoring them:", err)
+    cachedKeys = null
+  }
+  return cachedKeys
 }
 
 function subscribe(cb: () => void) {

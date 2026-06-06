@@ -14,21 +14,23 @@ jobs:
     steps:
       # Pinned to commit SHA — never a mutable tag — to prevent supply-chain attacks
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      # action-setup must run before setup-node so the pnpm cache can resolve the store path.
+      # Version is read from the `packageManager` field in package.json.
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
-          node-version: 20
-          cache: npm
+          # pnpm 11 needs Node >= 22.13 (uses the node:sqlite builtin); 24 matches local + Vercel.
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Type-check
-        run: npx tsc --noEmit
+        run: pnpm exec tsc --noEmit
 
       - name: Test
-        run: npm test
-        # Remove this step until Vitest is wired up (Task 9)
-        continue-on-error: true
+        run: pnpm test

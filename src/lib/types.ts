@@ -10,13 +10,20 @@ export type TokenUsage = {
   totalTokens: number
 }
 
-export type MessageRole = "user" | "assistant"
+export const MESSAGE_ROLE = {
+  USER: "user",
+  ASSISTANT: "assistant",
+} as const
+
+export type MessageRole = (typeof MESSAGE_ROLE)[keyof typeof MESSAGE_ROLE]
 
 export type Message = {
   id: string
   role: MessageRole
   content: string
   isStreaming?: boolean
+  // Set when the model's reply was cut off by the output-token cap.
+  truncated?: boolean
 }
 
 export const TRACE_STATUS = {
@@ -46,6 +53,8 @@ export type TraceStep = {
   toolName: string
   args?: unknown
   result?: unknown
+  // The model's reasoning_content for a MODEL step, surfaced as a collapsible section.
+  reasoning?: string
   durationMs?: number
   status: TraceStepStatus
   startedAt: number

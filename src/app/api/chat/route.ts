@@ -6,15 +6,16 @@ import { runAgentStream } from "@/lib/agent/graph"
 import { encodeEvent, STREAM_EVENT } from "@/lib/streaming/types"
 import { generatorToStream } from "@/lib/streaming/utils"
 import { checkRateLimit } from "@/lib/ratelimit"
-import type { ApiKeys } from "@/lib/types"
+import { type ApiKeys, MESSAGE_ROLE } from "@/lib/types"
 import {
   HEADER_FIREWORKS_KEY,
   HEADER_TAVILY_KEY,
   HEADER_OPENAI_KEY,
   SESSION_COOKIE_NAME,
+  SESSION_COOKIE_MAX_AGE_S,
   MAX_MESSAGE_LENGTH,
 } from "@/lib/config"
-import { checkModeration } from "@/lib/moderation"
+import { checkModeration, type ModerationResult } from "@/lib/moderation"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -38,13 +39,21 @@ const ChatRequestSchema = z.object({
         .max(MAX_MESSAGE_LENGTH, `Message exceeds ${MAX_MESSAGE_LENGTH} character limit`)
     ),
   history: z
-    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
+    .array(z.object({ role: z.enum([MESSAGE_ROLE.USER, MESSAGE_ROLE.ASSISTANT]), content: z.string() }))
     .default([]),
 })
+
+type ChatHistory = z.infer<typeof ChatRequestSchema>["history"]
 
 interface ResolvedKeys {
   keys: ApiKeys
   isDemo: boolean
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function jsonError(message: string, status: number, headers?: Record<string, string>): Response {
+  return Response.json({ error: message }, { status, headers })
 }
 
 function resolveKeys(req: NextRequest): ResolvedKeys | null {
@@ -73,87 +82,106 @@ async function getOrCreateSession(): Promise<{ sessionId: string; isNew: boolean
   return { sessionId: randomUUID(), isNew: true }
 }
 
-export async function POST(req: NextRequest) {
-  // ── Session ─────────────────────────────────────────────────────────────────
-  const { sessionId, isNew } = await getOrCreateSession()
+type ParsedRequest =
+  | { ok: true; message: string; history: ChatHistory }
+  | { ok: false; response: Response }
 
-  // ── Parse + validate body ─────────────────────────────────────────────────────
+async function parseChatRequest(req: NextRequest): Promise<ParsedRequest> {
   let rawBody: unknown
   try {
     rawBody = await req.json()
   } catch {
-    return Response.json({ error: "Invalid JSON body" }, { status: 400 })
+    return { ok: false, response: jsonError("Invalid JSON body", 400) }
   }
 
   const parsed = ChatRequestSchema.safeParse(rawBody)
   if (!parsed.success) {
-    return Response.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid request body" },
-      { status: 400 }
-    )
-  }
-  const { message: sanitized, history } = parsed.data
-
-  // ── Key resolution ───────────────────────────────────────────────────────────
-  const resolved = resolveKeys(req)
-  if (!resolved) {
-    return Response.json(
-      { error: "API keys required. Add your Fireworks and Tavily keys in Settings ⚙️" },
-      { status: 401 }
-    )
-  }
-
-  // ── Rate limiting ────────────────────────────────────────────────────────────
-  const { allowed, retryAfterMs } = await checkRateLimit(sessionId, resolved.isDemo)
-  if (!allowed) {
-    const retryAfterS = Math.ceil(retryAfterMs / 1000)
-    return new Response(
-      JSON.stringify({ error: "Rate limit exceeded. Please wait before sending another message." }),
-      {
-        status: 429,
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": String(retryAfterS),
-        },
-      }
-    )
-  }
-
-  // ── Response headers (shared by both blocked and streamed paths) ────────────
-  const responseHeaders: Record<string, string> = { ...(SSE_HEADERS as Record<string, string>) }
-  if (isNew) {
-    responseHeaders["Set-Cookie"] =
-      `${SESSION_COOKIE_NAME}=${sessionId}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 24 * 365}`
-  }
-
-  // ── Content moderation ───────────────────────────────────────────────────────
-  const userOpenaiKey = req.headers.get(HEADER_OPENAI_KEY) ?? undefined
-  const moderationStart = Date.now()
-  const moderation = await checkModeration(sanitized, userOpenaiKey)
-  const moderationDurationMs = Date.now() - moderationStart
-  if (moderation.blocked) {
-    async function* blockedStream(): AsyncGenerator<string> {
-      yield encodeEvent({
-        type: STREAM_EVENT.MODERATION,
-        durationMs: moderationDurationMs,
-        blocked: true,
-        reason: moderation.reason,
-      })
+    return {
+      ok: false,
+      response: jsonError(parsed.error.issues[0]?.message ?? "Invalid request body", 400),
     }
-    return new Response(generatorToStream(blockedStream(), () => ""), { headers: responseHeaders })
   }
+  return { ok: true, message: parsed.data.message, history: parsed.data.history }
+}
 
-  // ── Stream response ──────────────────────────────────────────────────────────
-  const resolvedKeys = resolved.keys
+// SSE headers plus a session cookie on first contact. `Secure` only in production —
+// omitting it locally keeps the cookie working over plain-HTTP dev.
+function buildResponseHeaders(sessionId: string, isNew: boolean): Record<string, string> {
+  const headers: Record<string, string> = { ...(SSE_HEADERS as Record<string, string>) }
+  if (isNew) {
+    const secure = process.env.NODE_ENV === "production" ? "; Secure" : ""
+    headers["Set-Cookie"] =
+      `${SESSION_COOKIE_NAME}=${sessionId}; Path=/; HttpOnly; SameSite=Strict${secure}; Max-Age=${SESSION_COOKIE_MAX_AGE_S}`
+  }
+  return headers
+}
+
+async function runModeration(
+  message: string,
+  req: NextRequest
+): Promise<ModerationResult & { durationMs: number }> {
+  const userOpenaiKey = req.headers.get(HEADER_OPENAI_KEY) ?? undefined
+  const start = Date.now()
+  const result = await checkModeration(message, userOpenaiKey)
+  return { ...result, durationMs: Date.now() - start }
+}
+
+// One MODERATION(blocked) frame — the client fills the assistant bubble with the reason.
+function moderationBlockedStream(durationMs: number, reason: string): ReadableStream<Uint8Array> {
+  async function* gen(): AsyncGenerator<string> {
+    yield encodeEvent({ type: STREAM_EVENT.MODERATION, durationMs, blocked: true, reason })
+  }
+  return generatorToStream(gen(), () => "")
+}
+
+// MODERATION(ok) frame, then the agent's token/tool/done stream.
+function buildAgentStream(
+  message: string,
+  history: ChatHistory,
+  keys: ApiKeys,
+  moderationDurationMs: number
+): ReadableStream<Uint8Array> {
   async function* withModeration(): AsyncGenerator<string> {
     yield encodeEvent({ type: STREAM_EVENT.MODERATION, durationMs: moderationDurationMs, blocked: false })
-    yield* runAgentStream(sanitized, history, resolvedKeys)
+    yield* runAgentStream(message, history, keys)
   }
-
-  const stream = generatorToStream(withModeration(), (err) => {
+  return generatorToStream(withModeration(), (err) => {
     const msg = err instanceof Error ? err.message : "Internal server error"
     return encodeEvent({ type: STREAM_EVENT.ERROR, message: msg })
   })
+}
 
+// ── Handler ───────────────────────────────────────────────────────────────────
+// Linear policy pipeline: session → validate → keys → rate limit → moderation → stream.
+
+export async function POST(req: NextRequest) {
+  const { sessionId, isNew } = await getOrCreateSession()
+
+  const parsed = await parseChatRequest(req)
+  if (!parsed.ok) return parsed.response
+
+  const resolved = resolveKeys(req)
+  if (!resolved) {
+    return jsonError("API keys required. Add your Fireworks and Tavily keys in Settings ⚙️", 401)
+  }
+
+  // Rate limit BEFORE moderation so the moderation API can't be spammed for free.
+  const { allowed, retryAfterMs } = await checkRateLimit(sessionId, resolved.isDemo)
+  if (!allowed) {
+    return jsonError("Rate limit exceeded. Please wait before sending another message.", 429, {
+      "Retry-After": String(Math.ceil(retryAfterMs / 1000)),
+    })
+  }
+
+  const responseHeaders = buildResponseHeaders(sessionId, isNew)
+
+  const moderation = await runModeration(parsed.message, req)
+  if (moderation.blocked) {
+    return new Response(moderationBlockedStream(moderation.durationMs, moderation.reason), {
+      headers: responseHeaders,
+    })
+  }
+
+  const stream = buildAgentStream(parsed.message, parsed.history, resolved.keys, moderation.durationMs)
   return new Response(stream, { headers: responseHeaders })
 }

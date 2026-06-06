@@ -1,3 +1,9 @@
+// ─── App metadata (shared by layout metadata + PWA manifest) ─────────────────
+export const APP_NAME = "Nexus Trace"
+export const APP_TITLE = "Nexus Trace — Streaming AI Agent"
+export const APP_DESCRIPTION = "A streaming AI agent with live tool-call trace visualization."
+export const APP_AUTHOR = "Arif Dewi"
+
 export const FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
 export const OPENAI_MODERATION_URL = "https://api.openai.com/v1/moderations"
 export const DEFAULT_MODEL = "accounts/fireworks/models/minimax-m2p7"
@@ -16,7 +22,6 @@ export const HISTORY_MAX_CHARS_PER_MESSAGE = 2000
 export const STORAGE_KEY_MESSAGES = "nexus-trace:messages"
 export const STORAGE_KEY_TRACE_STEPS = "nexus-trace:trace-steps"
 export const STORAGE_KEY_API_KEYS = "nexus-trace:api-keys"
-export const STORAGE_KEY_QUERY_USAGE = "nexus-trace:query-usage"
 export const STORAGE_KEY_SESSION_USAGE = "nexus-trace:session-usage"
 
 // Fireworks serverless pricing per 1M tokens (standard tier)
@@ -30,12 +35,23 @@ export const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: nu
 export const DEFAULT_MODEL_PRICING = { inputPer1M: 0.22, outputPer1M: 0.88 }
 
 export const MOBILE_BREAKPOINT_PX = 768
+export const TRACE_PANEL_WIDTH_PX = 420
+export const TEXTAREA_MAX_HEIGHT_PX = 160
 
 export const HEADER_FIREWORKS_KEY = "x-fireworks-key"
 export const HEADER_TAVILY_KEY = "x-tavily-key"
 export const HEADER_OPENAI_KEY = "x-openai-key"
 
+// "Get a key" dashboard links shown in the Settings modal.
+export const FIREWORKS_KEYS_URL = "https://app.fireworks.ai/settings/users/api-keys"
+export const TAVILY_KEYS_URL = "https://app.tavily.com/home"
+export const OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
+
+// Server route the client streams from (served by app/api/chat/route.ts).
+export const CHAT_API_PATH = "/api/chat"
+
 export const SESSION_COOKIE_NAME = "nexus-sid"
+export const SESSION_COOKIE_MAX_AGE_S = 60 * 60 * 24 * 365
 export const MAX_MESSAGE_LENGTH = 4000
 export const RATE_LIMIT_DEMO_MAX = 20
 export const RATE_LIMIT_OWN_KEY_MAX = 100

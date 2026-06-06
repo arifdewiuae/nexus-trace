@@ -1,0 +1,14 @@
+# Single-package repo. This file is pnpm's canonical config location (pnpm 10+),
+# used here to pin a transitive dependency and decide which build scripts may run.
+
+overrides:
+  postcss: ^8.5.10
+
+# pnpm 11 blocks dependency build scripts by default (strictDepBuilds), and an
+# unresolved entry FAILS `pnpm install` with a non-zero exit — which would break the
+# Vercel build. Every package that wants to run a script must be explicitly allowed
+# (true) or disallowed (false); leaving any unresolved triggers ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  sharp: true # native image lib used by Next.js image optimization
+  unrs-resolver: true # native module resolver used by ESLint import resolution
+  msw: false # dev/test-only; its postinstall copies a browser worker we don't use

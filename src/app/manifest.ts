@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next"
+import { APP_NAME, APP_TITLE, APP_DESCRIPTION } from "@/lib/config"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Nexus Trace — Streaming AI Agent",
-    short_name: "Nexus Trace",
-    description: "A streaming AI agent with live tool-call trace visualization.",
+    name: APP_TITLE,
+    short_name: APP_NAME,
+    description: APP_DESCRIPTION,
     start_url: "/",
     display: "standalone",
     orientation: "any",

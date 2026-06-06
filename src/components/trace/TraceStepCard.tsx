@@ -6,6 +6,7 @@ import type { TraceStep } from "@/lib/types"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { formatDuration, cn, resolveToolDecision } from "@/lib/utils"
 import { JsonViewer } from "./JsonViewer"
+import { CollapsibleText } from "./CollapsibleText"
 import { StatusIndicator } from "./StatusIndicator"
 
 const TOOL_ICONS: Record<string, React.ReactNode> = {
@@ -88,10 +89,16 @@ export function TraceStepCard({ step, index, nextTool }: Props) {
         </p>
       )}
 
+      {isModel && step.reasoning && (
+        <div className="border-border mt-2.5 border-t pt-2.5">
+          <CollapsibleText label="Reasoning" text={step.reasoning} />
+        </div>
+      )}
+
       {!isModel && (step.args !== undefined || step.result !== undefined) && (
         <div className="border-border mt-2.5 space-y-2 border-t pt-2.5">
           {step.args !== undefined && <JsonViewer label="Args" data={step.args} />}
-          {step.result !== undefined && <JsonViewer label="Result" data={step.result} defaultOpen />}
+          {step.result !== undefined && <JsonViewer label="Result" data={step.result} />}
         </div>
       )}
     </motion.div>

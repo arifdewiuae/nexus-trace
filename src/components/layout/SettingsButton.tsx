@@ -21,8 +21,9 @@ export function SettingsButton({ keys, hasKeys, onSave, onClear }: Props) {
       <button
         onClick={() => setOpen(true)}
         title="API key settings"
+        aria-label="API key settings"
         className={cn(
-          "relative cursor-pointer rounded-md p-1.5 transition-colors",
+          "relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-md transition-colors",
           "text-muted-foreground hover:text-foreground"
         )}
       >

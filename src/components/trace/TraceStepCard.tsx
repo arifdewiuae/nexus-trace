@@ -98,7 +98,7 @@ export function TraceStepCard({ step, index, nextTool }: Props) {
       {!isModel && (step.args !== undefined || step.result !== undefined) && (
         <div className="border-border mt-2.5 space-y-2 border-t pt-2.5">
           {step.args !== undefined && <JsonViewer label="Args" data={step.args} />}
-          {step.result !== undefined && <JsonViewer label="Result" data={step.result} defaultOpen />}
+          {step.result !== undefined && <JsonViewer label="Result" data={step.result} />}
         </div>
       )}
     </motion.div>

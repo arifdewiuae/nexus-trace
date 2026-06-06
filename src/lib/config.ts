@@ -48,6 +48,9 @@ export const FIREWORKS_KEYS_URL = "https://app.fireworks.ai/settings/users/api-k
 export const TAVILY_KEYS_URL = "https://app.tavily.com/home"
 export const OPENAI_KEYS_URL = "https://platform.openai.com/api-keys"
 
+// Server route the client streams from (served by app/api/chat/route.ts).
+export const CHAT_API_PATH = "/api/chat"
+
 export const SESSION_COOKIE_NAME = "nexus-sid"
 export const SESSION_COOKIE_MAX_AGE_S = 60 * 60 * 24 * 365
 export const MAX_MESSAGE_LENGTH = 4000

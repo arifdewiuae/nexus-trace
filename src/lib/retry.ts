@@ -8,6 +8,7 @@ export async function withRetry<T>(
       return await fn()
     } catch (err) {
       if (attempt === retries) throw err
+
       await new Promise((r) => setTimeout(r, delayMs * attempt))
     }
   }

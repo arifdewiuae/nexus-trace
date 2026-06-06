@@ -65,6 +65,8 @@ async function checkOpenAIModeration(text: string, userKey?: string): Promise<Mo
 
 export async function checkModeration(text: string, openaiKey?: string): Promise<ModerationResult> {
   const patternResult = checkJailbreakPatterns(text)
+
   if (patternResult.blocked) return patternResult
+
   return checkOpenAIModeration(text, openaiKey)
 }

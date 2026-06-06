@@ -2,7 +2,7 @@ import { ChatOpenAI } from "@langchain/openai"
 import { createAgent } from "langchain"
 import { AIMessage, HumanMessage } from "@langchain/core/messages"
 import { createTools } from "./tools"
-import { AGENT_SYSTEM_PROMPT } from "./state"
+import { AGENT_SYSTEM_PROMPT } from "./prompt"
 import { STREAM_EVENT, encodeEvent } from "@/lib/streaming/types"
 import { MODEL_LABEL, MESSAGE_ROLE, type ApiKeys } from "@/lib/types"
 import {

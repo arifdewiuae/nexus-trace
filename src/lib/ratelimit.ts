@@ -47,6 +47,7 @@ function makeInMemoryLimiter(max: number) {
   // server processes. `unref` keeps this timer from holding the event loop open.
   const sweep = setInterval(() => {
     const now = Date.now()
+
     for (const [id, bucket] of buckets) {
       if (now >= bucket.resetAt) buckets.delete(id)
     }
@@ -88,6 +89,7 @@ export async function checkRateLimit(
   if (upstash) {
     const limiter = isDemo ? upstash.demo : upstash.ownKeys
     const result = await limiter.limit(sessionId)
+
     return {
       allowed: result.success,
       retryAfterMs: result.success ? 0 : Math.max(0, result.reset - Date.now()),

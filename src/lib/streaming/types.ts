@@ -14,7 +14,13 @@ export type StreamEventType = (typeof STREAM_EVENT)[keyof typeof STREAM_EVENT]
 
 export type TokenDeltaEvent = { type: typeof STREAM_EVENT.TOKEN_DELTA; content: string }
 export type ModelStartEvent = { type: typeof STREAM_EVENT.MODEL_START; modelCallId: string; label: string }
-export type ModelEndEvent = { type: typeof STREAM_EVENT.MODEL_END; modelCallId: string; durationMs: number }
+export type ModelEndEvent = {
+  type: typeof STREAM_EVENT.MODEL_END
+  modelCallId: string
+  durationMs: number
+  // The model's reasoning_content for this call, if it emitted any. Shown in the trace only.
+  reasoning?: string
+}
 export type ToolStartEvent = {
   type: typeof STREAM_EVENT.TOOL_START
   toolName: string
@@ -42,6 +48,8 @@ export type DoneEvent = {
   inputTokens?: number
   outputTokens?: number
   estimatedCostUsd?: number
+  // True when the model hit its output-token cap (finish_reason "length") — the reply is cut off.
+  truncated?: boolean
 }
 export type ErrorEvent = { type: typeof STREAM_EVENT.ERROR; message: string }
 

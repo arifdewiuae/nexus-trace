@@ -6,6 +6,7 @@ import type { TraceStep } from "@/lib/types"
 import { TRACE_STATUS, STEP_TYPE } from "@/lib/types"
 import { formatDuration, cn, resolveToolDecision } from "@/lib/utils"
 import { JsonViewer } from "./JsonViewer"
+import { CollapsibleText } from "./CollapsibleText"
 import { StatusIndicator } from "./StatusIndicator"
 
 const TOOL_ICONS: Record<string, React.ReactNode> = {
@@ -86,6 +87,12 @@ export function TraceStepCard({ step, index, nextTool }: Props) {
         <p className="text-muted-foreground/70 mt-1.5 truncate font-mono text-[11px]">
           {resolveToolDecision(nextTool.toolName, nextTool.args)}
         </p>
+      )}
+
+      {isModel && step.reasoning && (
+        <div className="border-border mt-2.5 border-t pt-2.5">
+          <CollapsibleText label="Reasoning" text={step.reasoning} />
+        </div>
       )}
 
       {!isModel && (step.args !== undefined || step.result !== undefined) && (

@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration"
 import { ConnectionBanner } from "@/components/pwa/ConnectionBanner"
+import { APP_TITLE, APP_DESCRIPTION, APP_AUTHOR } from "@/lib/config"
 import "./globals.css"
 
 const inter = Inter({
@@ -20,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Nexus Trace — Streaming AI Agent",
-  description: "A streaming AI agent with live tool-call trace visualization. Built by Arif Dewi.",
+  title: APP_TITLE,
+  description: `${APP_DESCRIPTION} Built by ${APP_AUTHOR}.`,
 }
 
 export default function RootLayout({

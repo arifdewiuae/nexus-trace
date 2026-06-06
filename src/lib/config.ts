@@ -1,3 +1,9 @@
+// ─── App metadata (shared by layout metadata + PWA manifest) ─────────────────
+export const APP_NAME = "Nexus Trace"
+export const APP_TITLE = "Nexus Trace — Streaming AI Agent"
+export const APP_DESCRIPTION = "A streaming AI agent with live tool-call trace visualization."
+export const APP_AUTHOR = "Arif Dewi"
+
 export const FIREWORKS_BASE_URL = "https://api.fireworks.ai/inference/v1"
 export const OPENAI_MODERATION_URL = "https://api.openai.com/v1/moderations"
 export const DEFAULT_MODEL = "accounts/fireworks/models/minimax-m2p7"
@@ -30,12 +36,15 @@ export const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: nu
 export const DEFAULT_MODEL_PRICING = { inputPer1M: 0.22, outputPer1M: 0.88 }
 
 export const MOBILE_BREAKPOINT_PX = 768
+export const TRACE_PANEL_WIDTH_PX = 420
+export const TEXTAREA_MAX_HEIGHT_PX = 160
 
 export const HEADER_FIREWORKS_KEY = "x-fireworks-key"
 export const HEADER_TAVILY_KEY = "x-tavily-key"
 export const HEADER_OPENAI_KEY = "x-openai-key"
 
 export const SESSION_COOKIE_NAME = "nexus-sid"
+export const SESSION_COOKIE_MAX_AGE_S = 60 * 60 * 24 * 365
 export const MAX_MESSAGE_LENGTH = 4000
 export const RATE_LIMIT_DEMO_MAX = 20
 export const RATE_LIMIT_OWN_KEY_MAX = 100

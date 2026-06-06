@@ -30,7 +30,7 @@ Built as a portfolio project to demonstrate production-grade AI engineering: Lan
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | AI orchestration | LangGraph.js (ReAct agent) |
-| LLM | Fireworks.ai (`gpt-oss-20b` / `gpt-oss-120b`) |
+| LLM | Fireworks.ai (MiniMax M2.7 — `minimax-m2p7`) |
 | Web search | Tavily Search API |
 | Streaming | Server-Sent Events (SSE) |
 | Rate limiting | Upstash Redis (`@upstash/ratelimit`) |
@@ -77,7 +77,7 @@ app/              Entry points Next.js routes and layouts
 ```bash
 git clone https://github.com/arifdewiuae/nexus-trace.git
 cd nexus-trace
-npm install
+pnpm install
 cp .env.local.example .env.local
 ```
 
@@ -91,7 +91,7 @@ TAVILY_API_KEY=tvly-...
 ```
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -106,7 +106,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `TAVILY_API_KEY` | When demo mode on | Web search via Tavily |
 | `DEMO_KEYS_ENABLED` | No | `true` to use server-side keys as fallback |
 | `NEXT_PUBLIC_DEMO_KEYS_ENABLED` | No | Must match `DEMO_KEYS_ENABLED` |
-| `FIREWORKS_MODEL` | No | Override model (default: `gpt-oss-20b`) |
+| `FIREWORKS_MODEL` | No | Override model (default: `minimax-m2p7`) |
 | `UPSTASH_REDIS_REST_URL` | No | Redis URL for persistent rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | No | Redis token for persistent rate limiting |
 
@@ -117,13 +117,13 @@ Without Upstash, rate limiting falls back to an in-memory store that resets on s
 ## Commands
 
 ```bash
-npm run dev          # start dev server on :3000
-npm run build        # production build (also runs tsc)
-npm run lint         # ESLint
-npm run lint:fix     # ESLint with --fix
-npm run format       # Prettier (sorts Tailwind classes)
-npm test             # Vitest unit tests
-npx tsc --noEmit     # type-check without emit
+pnpm dev             # start dev server on :3000
+pnpm build           # production build (also runs tsc)
+pnpm lint            # ESLint
+pnpm lint:fix        # ESLint with --fix
+pnpm format          # Prettier (sorts Tailwind classes)
+pnpm test            # Vitest unit tests
+pnpm exec tsc --noEmit  # type-check without emit
 ```
 
 ---

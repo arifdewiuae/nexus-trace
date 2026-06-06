@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Square } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { MAX_MESSAGE_LENGTH } from "@/lib/config"
+import { MAX_MESSAGE_LENGTH, TEXTAREA_MAX_HEIGHT_PX } from "@/lib/config"
 
 // Show the counter only as the user nears the cap, to avoid clutter.
 const COUNTER_VISIBLE_THRESHOLD = MAX_MESSAGE_LENGTH * 0.8
@@ -23,7 +23,7 @@ export function ChatInput({ onSend, onStop, isStreaming, hasKeys }: Props) {
     const ta = textareaRef.current
     if (!ta) return
     ta.style.height = "auto"
-    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
+    ta.style.height = `${Math.min(ta.scrollHeight, TEXTAREA_MAX_HEIGHT_PX)}px`
   }, [value])
 
   const trimmedLength = value.trim().length

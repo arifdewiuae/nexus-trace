@@ -83,6 +83,11 @@ export function MessageBubble({ message }: Props) {
             {message.isStreaming && (
               <span className="inline-block h-[1em] w-[2px] animate-pulse bg-current align-middle opacity-70" />
             )}
+            {message.truncated && !message.isStreaming && (
+              <p className="text-muted-foreground mt-2 text-xs italic">
+                Response was cut off — the output-token limit was reached.
+              </p>
+            )}
           </div>
         )}
       </div>

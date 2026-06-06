@@ -63,6 +63,7 @@ export function SettingsModal({ keys, onSave, onClear, onClose }: Props) {
           <h2 className="text-base font-semibold">API Keys</h2>
           <button
             onClick={onClose}
+            aria-label="Close settings"
             className="text-muted-foreground hover:text-foreground cursor-pointer rounded-lg p-1.5 transition-colors"
           >
             <X className="h-4 w-4" />
@@ -102,6 +103,7 @@ export function SettingsModal({ keys, onSave, onClear, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setShowFireworks((v) => !v)}
+                aria-label={showFireworks ? "Hide Fireworks key" : "Show Fireworks key"}
                 className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
               >
                 {showFireworks ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -135,6 +137,7 @@ export function SettingsModal({ keys, onSave, onClear, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setShowTavily((v) => !v)}
+                aria-label={showTavily ? "Hide Tavily key" : "Show Tavily key"}
                 className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
               >
                 {showTavily ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -171,6 +174,7 @@ export function SettingsModal({ keys, onSave, onClear, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setShowOpenai((v) => !v)}
+                aria-label={showOpenai ? "Hide OpenAI key" : "Show OpenAI key"}
                 className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
               >
                 {showOpenai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

@@ -22,8 +22,15 @@ export async function streamChat(
   })
 
   if (!res.ok) {
-    const data = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error((data as { error?: string }).error ?? "Request failed")
+    // Only parse JSON when the server actually sent it — an HTML/text error page (proxy,
+    // gateway timeout) would otherwise collapse into a generic "Request failed".
+    const contentType = res.headers.get("content-type") ?? ""
+    if (contentType.includes("application/json")) {
+      const data = await res.json().catch(() => null)
+      throw new Error((data as { error?: string } | null)?.error ?? res.statusText ?? "Request failed")
+    }
+    const text = await res.text().catch(() => "")
+    throw new Error(text.trim() || res.statusText || "Request failed")
   }
 
   return res

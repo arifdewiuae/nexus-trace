@@ -26,8 +26,9 @@ export function Header({ onClear, canClear, keys, hasKeys, onSaveKeys, onClearKe
           onClick={onClear}
           disabled={!canClear}
           title="Clear conversation"
+          aria-label="Clear conversation"
           className={cn(
-            "text-muted-foreground hover:text-foreground cursor-pointer rounded-md p-1.5 transition-colors",
+            "text-muted-foreground hover:text-foreground flex h-9 w-9 cursor-pointer items-center justify-center rounded-md transition-colors",
             "disabled:pointer-events-none disabled:opacity-30"
           )}
         >

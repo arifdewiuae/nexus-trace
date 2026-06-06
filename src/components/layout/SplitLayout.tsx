@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Activity, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { TRACE_PANEL_WIDTH_PX } from "@/lib/config"
 
 type Tab = "chat" | "trace"
 
@@ -21,7 +22,12 @@ export function SplitLayout({ chat, trace, isStreaming, hasTrace }: Props) {
       {/* Desktop: side-by-side */}
       <div className="hidden h-full overflow-hidden md:flex">
         <div className="flex min-w-0 flex-1 flex-col">{chat}</div>
-        <div className="border-border flex w-[420px] shrink-0 flex-col border-l">{trace}</div>
+        <div
+          className="border-border flex shrink-0 flex-col border-l"
+          style={{ width: TRACE_PANEL_WIDTH_PX }}
+        >
+          {trace}
+        </div>
       </div>
 
       {/* Mobile: full-screen tabs */}

@@ -28,8 +28,19 @@ export function generatorToStream(
   })
 }
 
+function parseFrame(part: string): StreamEvent | null {
+  if (!part.startsWith("data: ")) return null
+  try {
+    return JSON.parse(part.slice(6)) as StreamEvent
+  } catch {
+    console.warn("[parseSSE] dropped malformed SSE frame:", part.slice(0, 200))
+    return null
+  }
+}
+
 export async function* parseSSE(response: Response): AsyncGenerator<StreamEvent> {
-  const reader = response.body!.getReader()
+  if (!response.body) throw new Error("Response has no body; cannot parse SSE stream")
+  const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ""
 
@@ -43,13 +54,17 @@ export async function* parseSSE(response: Response): AsyncGenerator<StreamEvent>
       buffer = parts.pop() ?? ""
 
       for (const part of parts) {
-        if (!part.startsWith("data: ")) continue
-        try {
-          yield JSON.parse(part.slice(6)) as StreamEvent
-        } catch {
-          // skip malformed events
-        }
+        const event = parseFrame(part)
+        if (event) yield event
       }
+    }
+
+    // Flush any bytes the decoder held back (incomplete multibyte char) and emit a final
+    // frame that wasn't terminated by "\n\n" — otherwise the last event is silently lost.
+    buffer += decoder.decode()
+    for (const part of buffer.split("\n\n")) {
+      const event = parseFrame(part)
+      if (event) yield event
     }
   } finally {
     reader.releaseLock()

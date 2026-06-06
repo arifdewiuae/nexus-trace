@@ -140,7 +140,13 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
         ...state,
         traceSteps: state.traceSteps.map((s) =>
           s.id === event.modelCallId
-            ? { ...s, status: TRACE_STATUS.DONE, durationMs: event.durationMs, endedAt: Date.now() }
+            ? {
+                ...s,
+                status: TRACE_STATUS.DONE,
+                durationMs: event.durationMs,
+                endedAt: Date.now(),
+                reasoning: event.reasoning ?? s.reasoning,
+              }
             : s
         ),
       }
@@ -200,7 +206,15 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
       }
 
     case STREAM_EVENT.DONE: {
-      const base = { ...state, totalLatencyMs: event.latencyMs, ttftMs: event.ttftMs ?? null }
+      const messages = event.truncated
+        ? state.messages.map((m) => (m.id === assistantId ? { ...m, truncated: true } : m))
+        : state.messages
+      const base = {
+        ...state,
+        messages,
+        totalLatencyMs: event.latencyMs,
+        ttftMs: event.ttftMs ?? null,
+      }
       if (event.inputTokens == null || event.outputTokens == null) return base
       const usage: TokenUsage = {
         inputTokens: event.inputTokens,

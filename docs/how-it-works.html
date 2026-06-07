@@ -363,6 +363,7 @@
     <div class="eyebrow">05 — The Brain</div>
     <h2>The agent &amp; its tools</h2>
     <p class="lead">A LangGraph ReAct agent built with <code class="inl">createAgent()</code> from the <code class="inl">langchain</code> package (the prebuilt <code class="inl">createReactAgent</code> is deprecated). It wraps a Fireworks model through the OpenAI-compatible client and is given two tools.</p>
+    <div class="callout" style="margin-top:18px"><b>Who drives the loop?</b> The <b>graph runs the loop, the LLM steers it.</b> LangGraph owns the iteration: model node → conditional edge → tools node → back to model. The model never loops or calls a tool itself — it just emits a message that either contains <code class="inl">tool_calls</code> (graph routes to the tools node and goes around again) or doesn't (graph routes to <code class="inl">END</code> and the run finishes). The <code class="inl">for await</code> in <code class="inl">runAgentStream()</code> is only a <b>consumer</b> of the resulting event stream — it narrates the loop, it doesn't control it. The hard stop is the graph's <code class="inl">recursionLimit</code>, not the model's discretion.</div>
     <div class="grid g2" style="margin-top:24px">
       <div class="card">
         <h3>🔎 web_search</h3>

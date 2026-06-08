@@ -159,6 +159,30 @@
   nav.toc a { font-size: 13px; color: var(--ink-dim); text-decoration: none; border: 1px solid var(--border);
               padding: 6px 13px; border-radius: 999px; background: var(--panel); transition: .15s; }
   nav.toc a:hover { color: var(--ink); border-color: var(--accent); }
+
+  /* ── Mobile (phones) ── */
+  @media (max-width: 600px) {
+    .wrap { padding: 0 16px 80px; }
+    header.hero { padding: 56px 18px 40px; }
+    header.hero p.sub { font-size: 16px; }
+    .hero-stat { flex: 1 1 calc(50% - 14px); min-width: 0; padding: 12px 14px; }
+    section { margin-top: 52px; }
+    .card { padding: 18px; }
+
+    /* Layer stack: name/path above description, no fixed label column */
+    .layer { grid-template-columns: 1fr; gap: 6px; padding: 14px 16px; }
+
+    /* Bar chart: label on its own row, track + value beneath it */
+    .bar-row { grid-template-columns: 1fr 56px; }
+    .bar-row .blabel { grid-column: 1 / -1; }
+
+    /* Flow diagram: tighten the bullet gutter */
+    .fnode { gap: 12px; }
+
+    /* Tables: trim padding so wide rows fit (card already scrolls) */
+    th, td { padding: 9px 10px; }
+    table { font-size: 13px; }
+  }
 </style>
 </head>
 <body>

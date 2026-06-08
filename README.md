@@ -6,6 +6,8 @@ Built as a portfolio project to demonstrate production-grade AI engineering: Lan
 
 ![Nexus Trace demo](demo.gif)
 
+📖 **[How it works under the hood →](https://nexus-trace.vercel.app/how-it-works.html)** — a rendered visual deep-dive into the layers, the SSE protocol, the ReAct loop, and the numbers behind it all (served at `/how-it-works.html` from `public/`).
+
 ---
 
 ## Features
@@ -136,3 +138,9 @@ pnpm exec tsc --noEmit  # type-check without emit
 | Own keys | 100 requests / hour |
 
 Limits are per session (HTTP-only cookie, 1-year expiry). Upstash Redis is used in production; falls back to in-memory Map in development.
+
+---
+
+## License
+
+[MIT](LICENSE) © arifdewiuae

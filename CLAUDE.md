@@ -16,6 +16,7 @@ pnpm lint:fix        # ESLint with --fix
 pnpm format          # Prettier write (sorts Tailwind classes via prettier-plugin-tailwindcss)
 pnpm format:check    # Prettier check (used in CI)
 pnpm test            # Vitest unit tests
+pnpm test:e2e        # Playwright E2E (builds + serves the app, runs the golden path)
 pnpm exec tsc --noEmit  # type-check without emitting
 ```
 

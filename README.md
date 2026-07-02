@@ -227,7 +227,7 @@ In development, once a run finishes the trace panel shows a **"View in LangSmith
 - **EU workspaces** (`eu.smith.langchain.com`): also set `LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com`, or traces silently fail to upload (the SDK defaults to the US data plane).
 - **Privacy**: LangSmith stores full run inputs and outputs by default. To trace structure/latency/tokens without persisting content, set `LANGSMITH_HIDE_INPUTS=true` and `LANGSMITH_HIDE_OUTPUTS=true`.
 
-![LangSmith dashboard — nexus-trace-chat runs with inputs, outputs, and latency](docs/langsmith.png)
+![LangSmith dashboard — nexus-trace-chat runs with inputs, outputs, and latency](docs/langsmith.webp)
 
 ---
 

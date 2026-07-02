@@ -28,6 +28,10 @@ const SSE_FRAMES: unknown[] = [
     inputTokens: 1200,
     outputTokens: 42,
     estimatedCostUsd: 0.0004,
+    // Included for wire-shape realism. The "View in LangSmith" link is gated on
+    // NODE_ENV === "development"; this suite runs a production build, so the link is
+    // intentionally not asserted here — it's a dev-only affordance.
+    langsmithRunId: "run-abc123",
   },
 ]
 

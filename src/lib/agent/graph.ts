@@ -59,10 +59,16 @@ interface RunContext {
 // Provider-aware model factory (adapter swap). Anthropic and Fireworks both plug into
 // createAgent/streamEvents identically; only the client class and key differ.
 function createModel(keys: ApiKeys, provider: Provider) {
+  // resolveKeys() (the request boundary) guarantees the active provider's key is present.
+  // Resolve it here so the type narrows to `string` and a mis-wired caller fails fast and
+  // clearly instead of the SDK silently falling back to an env var.
+  const apiKey = provider === PROVIDER.ANTHROPIC ? keys.anthropicKey : keys.fireworksKey
+  if (!apiKey) throw new Error(`Missing API key for provider "${provider}"`)
+
   if (provider === PROVIDER.ANTHROPIC) {
     return new ChatAnthropic({
       model: activeModelId(provider),
-      apiKey: keys.anthropicKey,
+      apiKey,
       streaming: true,
       temperature: AGENT_TEMPERATURE,
       maxTokens: AGENT_MAX_TOKENS,
@@ -71,10 +77,10 @@ function createModel(keys: ApiKeys, provider: Provider) {
   // Fireworks speaks the OpenAI wire format, so ChatOpenAI re-pointed at its base URL.
   return new ChatOpenAI({
     modelName: activeModelId(provider),
-    openAIApiKey: keys.fireworksKey,
+    openAIApiKey: apiKey,
     configuration: {
       baseURL: process.env.FIREWORKS_BASE_URL ?? FIREWORKS_BASE_URL,
-      apiKey: keys.fireworksKey,
+      apiKey,
     },
     streaming: true,
     temperature: AGENT_TEMPERATURE,

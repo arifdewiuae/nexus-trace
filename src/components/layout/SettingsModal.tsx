@@ -41,12 +41,16 @@ export function SettingsModal({ keys, provider, onSave, onSetProvider, onClear, 
 
   const handleSave = () => {
     if (!canSave) return
+    // The provider choice always persists (it's the point of this modal, and it's all that's
+    // needed in demo mode where the server supplies keys).
     onSetProvider(selected)
     const saved: ApiKeys = { tavilyKey: tavilyKey.trim() }
     if (fireworksKey.trim()) saved.fireworksKey = fireworksKey.trim()
     if (anthropicKey.trim()) saved.anthropicKey = anthropicKey.trim()
     if (openaiKey.trim()) saved.openaiKey = openaiKey.trim()
-    // Only persist keys when a usable pair exists; in demo mode the provider choice is enough.
+    // A BYO key set is only usable with BOTH an LLM key and a Tavily key (the web_search tool
+    // needs Tavily regardless of provider). Persist keys only when that complete pair exists —
+    // otherwise leave any existing stored keys untouched and just save the provider choice.
     if (saved.tavilyKey && (saved.fireworksKey || saved.anthropicKey)) onSave(saved)
     onClose()
   }

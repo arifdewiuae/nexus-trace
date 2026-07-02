@@ -81,6 +81,15 @@ describe("reducer", () => {
     expect(s.messages.find((m) => m.id === USER)?.content).toBe("hello")
   })
 
+  it("token_delta strips leading whitespace but keeps internal newlines", () => {
+    let s = started()
+    // Model emits leading blank lines before the first real token.
+    s = dispatch(s, evt({ type: STREAM_EVENT.TOKEN_DELTA, content: "\n\n" }))
+    expect(s.messages.find((m) => m.id === ASSISTANT)?.content).toBe("") // stays empty → loading dots
+    s = dispatch(s, evt({ type: STREAM_EVENT.TOKEN_DELTA, content: "Line 1\nLine 2" }))
+    expect(s.messages.find((m) => m.id === ASSISTANT)?.content).toBe("Line 1\nLine 2")
+  })
+
   it("model_start adds a step, then relabels it instead of duplicating", () => {
     let s = started()
     s = dispatch(s, evt({ type: STREAM_EVENT.MODEL_START, modelCallId: "m1", label: "Reasoning" }))

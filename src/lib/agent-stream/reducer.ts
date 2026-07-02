@@ -91,7 +91,11 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
       return {
         ...state,
         messages: patchById(state.messages, assistantId, (m) => ({
-          content: m.content + event.content,
+          // Trim leading whitespace while the reply is still empty — some models emit a
+          // "\n\n" before the first real token, which would otherwise open the bubble with
+          // blank lines and a floating cursor. Whitespace-only stays empty (loading dots keep
+          // showing); once real text arrives, internal newlines are preserved verbatim.
+          content: m.content ? m.content + event.content : (m.content + event.content).replace(/^\s+/, ""),
         })),
       }
 

@@ -224,7 +224,11 @@ Each run is tagged with the active provider + model and named `nexus-trace-chat`
 In development, once a run finishes the trace panel shows a **"View in LangSmith"** link (set
 `NEXT_PUBLIC_LANGSMITH_PROJECT_URL` to your project URL for a per-run deep link).
 
-<!-- TODO: add a screenshot of the LangSmith dashboard here after a local traced run, e.g. ![LangSmith dashboard](docs/langsmith.png) -->
+- **EU workspaces** (`eu.smith.langchain.com`): also set `LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com`, or traces silently fail to upload (the SDK defaults to the US data plane).
+- **Privacy**: LangSmith stores full run inputs and outputs by default. To trace structure/latency/tokens without persisting content, set `LANGSMITH_HIDE_INPUTS=true` and `LANGSMITH_HIDE_OUTPUTS=true`.
+
+<!-- Screenshot: save your LangSmith dashboard view to docs/langsmith.png, then replace this with:
+     ![LangSmith dashboard — nexus-trace-chat runs with inputs, outputs, and latency](docs/langsmith.png) -->
 
 ---
 

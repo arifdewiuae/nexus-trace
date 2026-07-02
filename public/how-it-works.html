@@ -207,6 +207,7 @@
     <a href="#state">State &amp; UI</a>
     <a href="#guards">Guardrails</a>
     <a href="#numbers">Key Numbers</a>
+    <a href="#observability">Observability &amp; Testing</a>
   </nav>
 </header>
 
@@ -238,13 +239,15 @@
         <span class="pill"><b>React 19</b></span>
         <span class="pill"><b>TypeScript 5</b></span>
         <span class="pill"><b>LangGraph.js</b> · createAgent()</span>
-        <span class="pill"><b>Fireworks.ai</b> · LLM inference</span>
+        <span class="pill"><b>Fireworks.ai</b> or <b>Claude</b> · LLM (swappable)</span>
         <span class="pill"><b>Tavily</b> · web search</span>
+        <span class="pill"><b>LangSmith</b> · tracing</span>
         <span class="pill"><b>Upstash Redis</b> · rate limit</span>
         <span class="pill"><b>OpenAI</b> · moderation</span>
         <span class="pill"><b>Tailwind v4</b> + shadcn/ui</span>
         <span class="pill"><b>Framer Motion</b></span>
-        <span class="pill"><b>Vitest</b> · tests</span>
+        <span class="pill"><b>Vitest</b> · unit</span>
+        <span class="pill"><b>Playwright</b> · E2E</span>
       </div>
     </div>
   </section>
@@ -318,7 +321,7 @@
         <div class="fbullet">5</div>
         <div class="fbody">
           <div class="ftitle">Reason → maybe call a tool → respond</div>
-          <div class="fmeta">Fireworks LLM ⇄ Tavily web_search</div>
+          <div class="fmeta">LLM (Fireworks / Claude) ⇄ Tavily web_search</div>
           <div class="fdesc">The model reasons (label "Reasoning"), optionally calls <code class="inl">web_search</code> / <code class="inl">get_current_datetime</code>, sees results, then streams the answer (label "Responding"). Loops up to 4 iterations.</div>
         </div>
       </div>
@@ -386,7 +389,7 @@
   <section id="agent">
     <div class="eyebrow">05 — The Brain</div>
     <h2>The agent &amp; its tools</h2>
-    <p class="lead">A LangGraph ReAct agent built with <code class="inl">createAgent()</code> from the <code class="inl">langchain</code> package (the prebuilt <code class="inl">createReactAgent</code> is deprecated). It wraps a Fireworks model through the OpenAI-compatible client and is given two tools.</p>
+    <p class="lead">A LangGraph ReAct agent built with <code class="inl">createAgent()</code> from the <code class="inl">langchain</code> package (the prebuilt <code class="inl">createReactAgent</code> is deprecated). The LLM is a <b>swappable adapter</b> — pick it right in <b>Settings → Agent provider</b> (sent per request as <code class="inl">x-llm-provider</code>, with <code class="inl">LLM_PROVIDER</code> as the server default): Fireworks via the OpenAI-compatible <code class="inl">ChatOpenAI</code>, or Anthropic Claude via <code class="inl">ChatAnthropic</code>. Both plug into the same graph and stream identically; the agent is given two tools.</p>
     <div class="callout" style="margin-top:18px"><b>Who drives the loop?</b> The <b>graph runs the loop, the LLM steers it.</b> LangGraph owns the iteration: model node → conditional edge → tools node → back to model. The model never loops or calls a tool itself — it just emits a message that either contains <code class="inl">tool_calls</code> (graph routes to the tools node and goes around again) or doesn't (graph routes to <code class="inl">END</code> and the run finishes). The <code class="inl">for await</code> in <code class="inl">runAgentStream()</code> is only a <b>consumer</b> of the resulting event stream — it narrates the loop, it doesn't control it. The hard stop is the graph's <code class="inl">recursionLimit</code>, not the model's discretion.</div>
     <div class="grid g2" style="margin-top:24px">
       <div class="card">
@@ -493,7 +496,8 @@
     <p class="lead">A core rule of the codebase: <b>no magic numbers or strings</b>. Every constant lives in one config file or an <code class="inl">as const</code> object.</p>
     <div class="grid g3" style="margin-top:24px">
       <div class="card"><h3 style="color:var(--accent)">Model</h3><div class="pills" style="flex-direction:column;align-items:flex-start">
-        <span class="pill">model <b>minimax-m2p7</b></span>
+        <span class="pill">provider <b>fireworks / anthropic</b></span>
+        <span class="pill">default <b>minimax-m2p7</b> / <b>claude-sonnet-4-6</b></span>
         <span class="pill">temperature <b>0.3</b></span>
         <span class="pill">max tokens <b>2048</b></span>
         <span class="pill">max iterations <b>4</b></span>
@@ -520,9 +524,31 @@
         <span class="pill">HTTP-only · SameSite=Strict</span>
       </div></div>
       <div class="card"><h3 style="color:var(--accent-2)">Pricing /1M tok</h3><div class="pills" style="flex-direction:column;align-items:flex-start">
-        <span class="pill">in <b>$0.30</b> · out <b>$1.20</b></span>
+        <span class="pill">fireworks <b>$0.30</b> in · <b>$1.20</b> out</span>
+        <span class="pill">claude-sonnet <b>$3</b> in · <b>$15</b> out</span>
         <span class="pill">cost shown per query + session</span>
       </div></div>
+    </div>
+  </section>
+
+  <!-- OBSERVABILITY & TESTING -->
+  <section id="observability">
+    <div class="eyebrow">09 — Observability &amp; Testing</div>
+    <h2>Cost, latency, tracing &amp; tests</h2>
+    <p class="lead">Beyond the live trace, every run is measured, optionally traced to LangSmith, and the golden path is guarded by an end-to-end test.</p>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card">
+        <h3>📊 Cost &amp; latency</h3>
+        <p style="color:var(--ink-dim);font-size:14px;margin:0">The <code class="inl">done</code> event carries TTFT, total latency, token usage and estimated USD cost — computed server-side in <code class="inl">graph.ts</code> from per-provider pricing tables. Per-step durations ride each <code class="inl">model_end</code> / <code class="inl">tool_result</code>.</p>
+      </div>
+      <div class="card">
+        <h3>🔬 LangSmith</h3>
+        <p style="color:var(--ink-dim);font-size:14px;margin:0">Because it's a LangChain app, setting the <code class="inl">LANGSMITH_*</code> env vars auto-traces every run — no code. Runs are tagged with provider + model; in dev the trace panel shows a <b>"View in LangSmith"</b> deep link.</p>
+      </div>
+      <div class="card">
+        <h3>🎭 Playwright E2E</h3>
+        <p style="color:var(--ink-dim);font-size:14px;margin:0">A CI-gated test drives the real UI against a production build and mocks <code class="inl">/api/chat</code> with canned SSE frames — covering <b>send → tool-call → stream → replay</b> with no LLM or network calls.</p>
+      </div>
     </div>
   </section>
 

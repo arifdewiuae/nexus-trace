@@ -36,6 +36,8 @@ export interface AgentState {
   readonly isStreaming: boolean
   readonly totalLatencyMs: number | null
   readonly ttftMs: number | null
+  // Root LangSmith run id from the last completed run (dev-only "View in LangSmith" link).
+  readonly langsmithRunId: string | null
   readonly sessionUsage: TokenUsage
   readonly sessionCostUsd: number
   readonly error: string | null
@@ -57,6 +59,7 @@ export function emptyState(): AgentState {
     isStreaming: false,
     totalLatencyMs: null,
     ttftMs: null,
+    langsmithRunId: null,
     sessionUsage: EMPTY_USAGE,
     sessionCostUsd: 0,
     error: null,
@@ -176,6 +179,7 @@ function applyStreamEvent(state: AgentState, event: StreamEvent, assistantId: st
           : state.messages,
         totalLatencyMs: event.latencyMs,
         ttftMs: event.ttftMs ?? null,
+        langsmithRunId: event.langsmithRunId ?? null,
       }
       if (event.inputTokens == null || event.outputTokens == null) return base
 
@@ -234,6 +238,7 @@ export function reducer(state: AgentState, action: Action): AgentState {
         isStreaming: true,
         totalLatencyMs: null,
         ttftMs: null,
+        langsmithRunId: null,
         error: null,
       }
 

@@ -50,6 +50,9 @@ export type DoneEvent = {
   estimatedCostUsd?: number
   // True when the model hit its output-token cap (finish_reason "length") — the reply is cut off.
   truncated?: boolean
+  // Root LangSmith run id for this request, present only when LANGSMITH_TRACING is on.
+  // Used by the dev-only "View in LangSmith" link in the trace panel.
+  langsmithRunId?: string
 }
 export type ErrorEvent = { type: typeof STREAM_EVENT.ERROR; message: string }
 

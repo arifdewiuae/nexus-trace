@@ -9,11 +9,16 @@ import { checkRateLimit } from "@/lib/ratelimit"
 import { type ApiKeys, MESSAGE_ROLE } from "@/lib/types"
 import {
   HEADER_FIREWORKS_KEY,
+  HEADER_ANTHROPIC_KEY,
   HEADER_TAVILY_KEY,
   HEADER_OPENAI_KEY,
+  HEADER_LLM_PROVIDER,
   SESSION_COOKIE_NAME,
   SESSION_COOKIE_MAX_AGE_S,
   MAX_MESSAGE_LENGTH,
+  PROVIDER,
+  type Provider,
+  resolveProvider,
 } from "@/lib/config"
 import { checkModeration, type ModerationResult } from "@/lib/moderation"
 
@@ -48,6 +53,12 @@ type ChatHistory = z.infer<typeof ChatRequestSchema>["history"]
 interface ResolvedKeys {
   keys: ApiKeys
   isDemo: boolean
+  provider: Provider
+}
+
+// Provider is chosen per-request in the UI (x-llm-provider header); LLM_PROVIDER env is the default.
+function requestProvider(req: NextRequest): Provider {
+  return resolveProvider(req.headers.get(HEADER_LLM_PROVIDER) ?? process.env.LLM_PROVIDER)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -56,22 +67,34 @@ function jsonError(message: string, status: number, headers?: Record<string, str
   return Response.json({ error: message }, { status, headers })
 }
 
+// Provider-aware: require the LLM key matching the active provider plus Tavily (for the
+// web-search tool). User-supplied headers win; otherwise fall back to demo env keys.
 function resolveKeys(req: NextRequest): ResolvedKeys | null {
-  const userFireworks = req.headers.get(HEADER_FIREWORKS_KEY)
-  const userTavily = req.headers.get(HEADER_TAVILY_KEY)
+  const provider = requestProvider(req)
+  const userTavily = req.headers.get(HEADER_TAVILY_KEY)?.trim()
+  const demoEnabled = process.env.DEMO_KEYS_ENABLED === "true"
+  const demoTavily = process.env.TAVILY_API_KEY?.trim() ?? ""
 
-  if (userFireworks?.trim() && userTavily?.trim()) {
-    return { keys: { fireworksKey: userFireworks, tavilyKey: userTavily }, isDemo: false }
-  }
-
-  if (process.env.DEMO_KEYS_ENABLED === "true") {
-    const fireworksKey = process.env.FIREWORKS_API_KEY ?? ""
-    const tavilyKey = process.env.TAVILY_API_KEY ?? ""
-    if (fireworksKey.trim() && tavilyKey.trim()) {
-      return { keys: { fireworksKey, tavilyKey }, isDemo: true }
+  if (provider === PROVIDER.ANTHROPIC) {
+    const userAnthropic = req.headers.get(HEADER_ANTHROPIC_KEY)?.trim()
+    if (userAnthropic && userTavily) {
+      return { keys: { anthropicKey: userAnthropic, tavilyKey: userTavily }, isDemo: false, provider }
     }
+    const demoAnthropic = process.env.ANTHROPIC_API_KEY?.trim() ?? ""
+    if (demoEnabled && demoAnthropic && demoTavily) {
+      return { keys: { anthropicKey: demoAnthropic, tavilyKey: demoTavily }, isDemo: true, provider }
+    }
+    return null
   }
 
+  const userFireworks = req.headers.get(HEADER_FIREWORKS_KEY)?.trim()
+  if (userFireworks && userTavily) {
+    return { keys: { fireworksKey: userFireworks, tavilyKey: userTavily }, isDemo: false, provider }
+  }
+  const demoFireworks = process.env.FIREWORKS_API_KEY?.trim() ?? ""
+  if (demoEnabled && demoFireworks && demoTavily) {
+    return { keys: { fireworksKey: demoFireworks, tavilyKey: demoTavily }, isDemo: true, provider }
+  }
   return null
 }
 
@@ -139,11 +162,12 @@ function buildAgentStream(
   message: string,
   history: ChatHistory,
   keys: ApiKeys,
+  provider: Provider,
   moderationDurationMs: number
 ): ReadableStream<Uint8Array> {
   async function* withModeration(): AsyncGenerator<string> {
     yield encodeEvent({ type: STREAM_EVENT.MODERATION, durationMs: moderationDurationMs, blocked: false })
-    yield* runAgentStream(message, history, keys)
+    yield* runAgentStream(message, history, keys, provider)
   }
   return generatorToStream(withModeration(), (err) => {
     const msg = err instanceof Error ? err.message : "Internal server error"
@@ -162,7 +186,8 @@ export async function POST(req: NextRequest) {
 
   const resolved = resolveKeys(req)
   if (!resolved) {
-    return jsonError("API keys required. Add your Fireworks and Tavily keys in Settings ⚙️", 401)
+    const llmName = requestProvider(req) === PROVIDER.ANTHROPIC ? "Anthropic" : "Fireworks"
+    return jsonError(`API keys required. Add your ${llmName} and Tavily keys in Settings ⚙️`, 401)
   }
 
   // Rate limit BEFORE moderation so the moderation API can't be spammed for free.
@@ -182,6 +207,12 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  const stream = buildAgentStream(parsed.message, parsed.history, resolved.keys, moderation.durationMs)
+  const stream = buildAgentStream(
+    parsed.message,
+    parsed.history,
+    resolved.keys,
+    resolved.provider,
+    moderation.durationMs
+  )
   return new Response(stream, { headers: responseHeaders })
 }

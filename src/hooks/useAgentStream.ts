@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useReducer, useRef } from "react"
 import type { Message, ApiKeys } from "@/lib/types"
+import type { Provider } from "@/lib/config"
 import type { HistoryMessage } from "@/lib/api/chat"
 import { parseSSE } from "@/lib/streaming/utils"
 import { streamChat } from "@/lib/api/chat"
 import { AGENT_ACTION, reducer, emptyState } from "@/lib/agent-stream/reducer"
 import { loadPersisted, persistState } from "@/lib/agent-stream/storage"
 
-export function useAgentStream(apiKeys?: ApiKeys | null) {
+export function useAgentStream(apiKeys?: ApiKeys | null, provider?: Provider) {
   const [state, dispatch] = useReducer(reducer, undefined, emptyState)
   const abortRef = useRef<AbortController | null>(null)
   const messagesRef = useRef<readonly Message[]>(state.messages)
   const apiKeysRef = useRef(apiKeys)
+  const providerRef = useRef(provider)
 
   useEffect(() => {
     messagesRef.current = state.messages
@@ -20,6 +22,9 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
   useEffect(() => {
     apiKeysRef.current = apiKeys
   }, [apiKeys])
+  useEffect(() => {
+    providerRef.current = provider
+  }, [provider])
 
   // Hydrate from sessionStorage after mount so the first render matches SSR.
   useEffect(() => {
@@ -46,7 +51,13 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     dispatch({ kind: AGENT_ACTION.SEND_START, userId: crypto.randomUUID(), assistantId, content })
 
     try {
-      const res = await streamChat(content, history, abort.signal, apiKeysRef.current ?? undefined)
+      const res = await streamChat(
+        content,
+        history,
+        abort.signal,
+        apiKeysRef.current ?? undefined,
+        providerRef.current
+      )
 
       for await (const event of parseSSE(res)) {
         if (abort.signal.aborted) break
@@ -81,6 +92,7 @@ export function useAgentStream(apiKeys?: ApiKeys | null) {
     isStreaming: state.isStreaming,
     totalLatencyMs: state.totalLatencyMs,
     ttftMs: state.ttftMs,
+    langsmithRunId: state.langsmithRunId,
     sessionUsage: state.sessionUsage,
     sessionCostUsd: state.sessionCostUsd,
     error: state.error,

@@ -10,7 +10,7 @@ import { ChatInput } from "./ChatInput"
 import { AlertCircle, X } from "lucide-react"
 
 export function ChatContainer() {
-  const { keys, hasKeys, setKeys, clearKeys } = useApiKeys()
+  const { keys, provider, hasKeys, setKeys, setProvider, clearKeys } = useApiKeys()
 
   const {
     messages,
@@ -18,6 +18,7 @@ export function ChatContainer() {
     isStreaming,
     totalLatencyMs,
     ttftMs,
+    langsmithRunId,
     sessionUsage,
     sessionCostUsd,
     error,
@@ -25,7 +26,7 @@ export function ChatContainer() {
     clearMessages,
     clearError,
     stopStreaming,
-  } = useAgentStream(keys)
+  } = useAgentStream(keys, provider)
 
   return (
     <div className="flex h-full flex-col">
@@ -33,8 +34,10 @@ export function ChatContainer() {
         onClear={clearMessages}
         canClear={messages.length > 0 && !isStreaming}
         keys={keys}
+        provider={provider}
         hasKeys={hasKeys}
         onSaveKeys={setKeys}
+        onSetProvider={setProvider}
         onClearKeys={clearKeys}
       />
       <div className="flex-1 overflow-hidden">
@@ -70,6 +73,7 @@ export function ChatContainer() {
               isStreaming={isStreaming}
               totalLatencyMs={totalLatencyMs}
               ttftMs={ttftMs}
+              langsmithRunId={langsmithRunId}
               sessionUsage={sessionUsage}
               sessionCostUsd={sessionCostUsd}
             />

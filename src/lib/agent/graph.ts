@@ -1,4 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai"
+import { ChatAnthropic } from "@langchain/anthropic"
 import { createAgent } from "langchain"
 import { AIMessage, HumanMessage } from "@langchain/core/messages"
 import { createTools } from "./tools"
@@ -8,15 +9,34 @@ import { MODEL_LABEL, MESSAGE_ROLE, type ApiKeys } from "@/lib/types"
 import {
   FIREWORKS_BASE_URL,
   DEFAULT_MODEL,
+  DEFAULT_ANTHROPIC_MODEL,
+  PROVIDER,
+  type Provider,
   AGENT_TEMPERATURE,
   AGENT_MAX_TOKENS,
-  AGENT_MAX_ITERATIONS,
+  AGENT_RECURSION_LIMIT,
   HISTORY_MAX_TURNS,
   HISTORY_MAX_CHARS_PER_MESSAGE,
   GRAPH_EVENTS,
+  FINISH_REASON,
+  CONTENT_BLOCK_TYPE_TEXT,
+  LANGSMITH_RUN_NAME,
   MODEL_PRICING,
   DEFAULT_MODEL_PRICING,
 } from "@/lib/config"
+
+// LangChain auto-traces to LangSmith when either env flag is set (v1 uses LANGSMITH_TRACING,
+// older setups LANGCHAIN_TRACING_V2). We only forward the run id to the client when it's on.
+function langsmithEnabled(): boolean {
+  return process.env.LANGSMITH_TRACING === "true" || process.env.LANGCHAIN_TRACING_V2 === "true"
+}
+
+// The active LLM model id for the given provider — used for pricing lookup and trace metadata.
+function activeModelId(provider: Provider): string {
+  return provider === PROVIDER.ANTHROPIC
+    ? (process.env.ANTHROPIC_MODEL ?? DEFAULT_ANTHROPIC_MODEL)
+    : (process.env.FIREWORKS_MODEL ?? DEFAULT_MODEL)
+}
 
 interface RunContext {
   pricing: { inputPer1M: number; outputPer1M: number }
@@ -32,15 +52,35 @@ interface RunContext {
   reasoningByRun: Map<string, string>
   // Set when the model stops because it hit the output-token cap (finish_reason "length").
   truncated: boolean
+  // Root LangSmith run id (first streamed event's run_id) — surfaced for the dev-only deep link.
+  rootRunId: string | null
 }
 
-function createModel(fireworksKey: string) {
+// Provider-aware model factory (adapter swap). Anthropic and Fireworks both plug into
+// createAgent/streamEvents identically; only the client class and key differ.
+function createModel(keys: ApiKeys, provider: Provider) {
+  // resolveKeys() (the request boundary) guarantees the active provider's key is present.
+  // Resolve it here so the type narrows to `string` and a mis-wired caller fails fast and
+  // clearly instead of the SDK silently falling back to an env var.
+  const apiKey = provider === PROVIDER.ANTHROPIC ? keys.anthropicKey : keys.fireworksKey
+  if (!apiKey) throw new Error(`Missing API key for provider "${provider}"`)
+
+  if (provider === PROVIDER.ANTHROPIC) {
+    return new ChatAnthropic({
+      model: activeModelId(provider),
+      apiKey,
+      streaming: true,
+      temperature: AGENT_TEMPERATURE,
+      maxTokens: AGENT_MAX_TOKENS,
+    })
+  }
+  // Fireworks speaks the OpenAI wire format, so ChatOpenAI re-pointed at its base URL.
   return new ChatOpenAI({
-    modelName: process.env.FIREWORKS_MODEL ?? DEFAULT_MODEL,
-    openAIApiKey: fireworksKey,
+    modelName: activeModelId(provider),
+    openAIApiKey: apiKey,
     configuration: {
       baseURL: process.env.FIREWORKS_BASE_URL ?? FIREWORKS_BASE_URL,
-      apiKey: fireworksKey,
+      apiKey,
     },
     streaming: true,
     temperature: AGENT_TEMPERATURE,
@@ -69,7 +109,9 @@ interface ModelEndOutput {
   usage_metadata?: { input_tokens?: number; output_tokens?: number }
   response_metadata?: {
     token_usage?: { prompt_tokens?: number; completion_tokens?: number }
+    // OpenAI/Fireworks report "length"; Anthropic reports stop_reason "max_tokens".
     finish_reason?: string
+    stop_reason?: string
   }
   additional_kwargs?: { reasoning_content?: string; reasoning?: string }
 }
@@ -105,12 +147,27 @@ function createRunContext(modelId: string): RunContext {
     modelHasTokens: new Set(),
     reasoningByRun: new Map(),
     truncated: false,
+    rootRunId: null,
   }
 }
 
 function* onModelStart(ctx: RunContext, runId: string): Generator<string> {
   ctx.modelStartTimes.set(runId, Date.now())
   yield encodeEvent({ type: STREAM_EVENT.MODEL_START, modelCallId: runId, label: MODEL_LABEL.REASONING })
+}
+
+// LangChain delivers streamed text as a plain string (Fireworks via ChatOpenAI) or, when tools
+// are bound to the model, as an array of content blocks (Anthropic via ChatAnthropic). Extract
+// just the answer text from either shape — tool-call (input_json_delta) and thinking blocks are
+// skipped so they never leak into the reply.
+function extractStreamText(content: unknown): string {
+  if (typeof content === "string") return content
+  if (!Array.isArray(content)) return ""
+  let text = ""
+  for (const block of content as { type?: string; text?: string }[]) {
+    if (block?.type === CONTENT_BLOCK_TYPE_TEXT && block.text) text += block.text
+  }
+  return text
 }
 
 function* onModelStream(ctx: RunContext, runId: string, data: unknown): Generator<string> {
@@ -130,16 +187,16 @@ function* onModelStream(ctx: RunContext, runId: string, data: unknown): Generato
   if (typeof reasoningDelta === "string" && reasoningDelta.length > 0) {
     ctx.reasoningByRun.set(runId, (ctx.reasoningByRun.get(runId) ?? "") + reasoningDelta)
   }
-  const content = chunk?.content
+  const text = extractStreamText(chunk?.content)
   const toolCallChunks = chunk?.tool_call_chunks ?? []
 
-  if (typeof content === "string" && content.length > 0 && toolCallChunks.length === 0) {
+  if (text.length > 0 && toolCallChunks.length === 0) {
     if (!ctx.modelHasTokens.has(runId)) {
       ctx.modelHasTokens.add(runId)
       ctx.firstTokenTime ??= Date.now()
       yield encodeEvent({ type: STREAM_EVENT.MODEL_START, modelCallId: runId, label: MODEL_LABEL.RESPONDING })
     }
-    yield encodeEvent({ type: STREAM_EVENT.TOKEN_DELTA, content })
+    yield encodeEvent({ type: STREAM_EVENT.TOKEN_DELTA, content: text })
   }
 }
 
@@ -154,7 +211,13 @@ function* onModelEnd(ctx: RunContext, runId: string, data: unknown): Generator<s
   ctx.totalOutputTokens += usage.output
   const output = (data as { output?: ModelEndOutput })?.output
 
-  if (output?.response_metadata?.finish_reason === "length") ctx.truncated = true
+  const meta = output?.response_metadata
+  if (
+    meta?.finish_reason === FINISH_REASON.OPENAI_LENGTH ||
+    meta?.stop_reason === FINISH_REASON.ANTHROPIC_MAX_TOKENS
+  ) {
+    ctx.truncated = true
+  }
   // Prefer the streamed reasoning; fall back to a non-streamed reasoning_content on the final message.
   const streamed = ctx.reasoningByRun.get(runId)
   ctx.reasoningByRun.delete(runId)
@@ -209,35 +272,44 @@ function* buildDoneEvent(ctx: RunContext): Generator<string> {
       ? (ctx.totalInputTokens * ctx.pricing.inputPer1M + ctx.totalOutputTokens * ctx.pricing.outputPer1M) / 1_000_000
       : undefined,
     truncated: ctx.truncated ? true : undefined,
+    langsmithRunId: langsmithEnabled() && ctx.rootRunId ? ctx.rootRunId : undefined,
   })
 }
 
 export async function* runAgentStream(
   userMessage: string,
   history: { role: string; content: string }[] = [],
-  keys: ApiKeys
+  keys: ApiKeys,
+  provider: Provider
 ): AsyncGenerator<string> {
+  const modelId = activeModelId(provider)
   const graph = createAgent({
-    model: createModel(keys.fireworksKey),
+    model: createModel(keys, provider),
     tools: createTools(keys.tavilyKey),
     systemPrompt: AGENT_SYSTEM_PROMPT,
   })
 
-  const modelId = process.env.FIREWORKS_MODEL ?? DEFAULT_MODEL
   const ctx = createRunContext(modelId)
 
   const historyMessages = trimHistory(history).map((m) =>
     m.role === MESSAGE_ROLE.USER ? new HumanMessage(m.content) : new AIMessage(m.content)
   )
 
-  const eventStream = graph.streamEvents(
-    { messages: [...historyMessages, new HumanMessage(userMessage)] },
-    { version: "v2", recursionLimit: AGENT_MAX_ITERATIONS * 2 + 2 }
-  )
+  // Names/tags this run in the LangSmith project so it's easy to find in the dashboard.
+  // Bound via withConfig because the Pregel streamEvents options type doesn't accept
+  // runName/tags/metadata directly.
+  const eventStream = graph
+    .withConfig({ runName: LANGSMITH_RUN_NAME, tags: [provider], metadata: { provider, model: modelId } })
+    .streamEvents(
+      { messages: [...historyMessages, new HumanMessage(userMessage)] },
+      { version: "v2", recursionLimit: AGENT_RECURSION_LIMIT }
+    )
 
   for await (const event of eventStream) {
     const { event: eventName, name, data } = event
     const runId: string = event.run_id ?? `run-${ctx.stepIndex}`
+    // The first streamed event is the graph root — its run_id is the LangSmith trace root.
+    ctx.rootRunId ??= event.run_id ?? null
 
     if (eventName === GRAPH_EVENTS.CHAT_MODEL_START) yield* onModelStart(ctx, runId)
     if (eventName === GRAPH_EVENTS.CHAT_MODEL_STREAM) yield* onModelStream(ctx, runId, data)

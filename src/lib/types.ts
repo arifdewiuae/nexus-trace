@@ -1,5 +1,8 @@
 export type ApiKeys = {
-  fireworksKey: string
+  // The active LLM key depends on the provider (LLM_PROVIDER): Fireworks or Anthropic.
+  // Only the one matching the active provider is populated.
+  fireworksKey?: string
+  anthropicKey?: string
   tavilyKey: string
   openaiKey?: string
 }

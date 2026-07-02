@@ -3,17 +3,20 @@
 import { useState } from "react"
 import { Settings } from "lucide-react"
 import type { ApiKeys } from "@/lib/types"
+import type { Provider } from "@/lib/config"
 import { cn } from "@/lib/utils"
 import { SettingsModal } from "./SettingsModal"
 
 type Props = {
   keys: ApiKeys | null
+  provider: Provider
   hasKeys: boolean
   onSave: (keys: ApiKeys) => void
+  onSetProvider: (provider: Provider) => void
   onClear: () => void
 }
 
-export function SettingsButton({ keys, hasKeys, onSave, onClear }: Props) {
+export function SettingsButton({ keys, provider, hasKeys, onSave, onSetProvider, onClear }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -36,7 +39,9 @@ export function SettingsButton({ keys, hasKeys, onSave, onClear }: Props) {
       {open && (
         <SettingsModal
           keys={keys}
+          provider={provider}
           onSave={onSave}
+          onSetProvider={onSetProvider}
           onClear={onClear}
           onClose={() => setOpen(false)}
         />

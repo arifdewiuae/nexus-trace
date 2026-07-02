@@ -8,6 +8,7 @@ type Props = {
   isStreaming: boolean
   totalLatencyMs: number | null
   ttftMs?: number | null
+  langsmithRunId?: string | null
   sessionUsage?: TokenUsage
   sessionCostUsd?: number
 }
@@ -17,6 +18,7 @@ export function TracePanel({
   isStreaming,
   totalLatencyMs,
   ttftMs,
+  langsmithRunId,
   sessionUsage,
   sessionCostUsd,
 }: Props) {
@@ -29,6 +31,7 @@ export function TracePanel({
         isStreaming={isStreaming}
         totalLatencyMs={totalLatencyMs}
         ttftMs={ttftMs}
+        langsmithRunId={langsmithRunId}
       />
 
       <TraceStepList steps={steps} isStreaming={isStreaming} />

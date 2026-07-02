@@ -115,13 +115,18 @@ Open [http://localhost:3000](http://localhost:3000).
 | `FIREWORKS_API_KEY` | Fireworks + demo mode | LLM inference via Fireworks.ai |
 | `ANTHROPIC_API_KEY` | Anthropic + demo mode | LLM inference via Anthropic Claude |
 | `TAVILY_API_KEY` | When demo mode on | Web search via Tavily (both providers) |
+| `OPENAI_API_KEY` | No | Content moderation via OpenAI's moderation endpoint (omit to rely on jailbreak-pattern checks only) |
 | `DEMO_KEYS_ENABLED` | No | `true` to use server-side keys as fallback |
 | `NEXT_PUBLIC_DEMO_KEYS_ENABLED` | No | Must match `DEMO_KEYS_ENABLED` |
 | `FIREWORKS_MODEL` | No | Override Fireworks model (default: `minimax-m2p7`) |
+| `FIREWORKS_BASE_URL` | No | Override the Fireworks API base URL (rarely needed) |
 | `ANTHROPIC_MODEL` | No | Override Claude model (default: `claude-sonnet-4-6`) |
 | `LANGSMITH_TRACING` | No | `true` to trace runs to LangSmith |
 | `LANGSMITH_API_KEY` | For tracing | LangSmith API key |
 | `LANGSMITH_PROJECT` | No | LangSmith project name (default project otherwise) |
+| `LANGSMITH_ENDPOINT` | EU workspaces | LangSmith data-plane URL; EU workspaces must set `https://eu.api.smith.langchain.com` (US default otherwise) |
+| `LANGSMITH_HIDE_INPUTS` | No | `true` to omit run inputs (prompts) from traces — PII safety |
+| `LANGSMITH_HIDE_OUTPUTS` | No | `true` to omit run outputs (replies) from traces — PII safety |
 | `NEXT_PUBLIC_LANGSMITH_PROJECT_URL` | No | Base URL for the dev-only "View in LangSmith" link |
 | `UPSTASH_REDIS_REST_URL` | No | Redis URL for persistent rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | No | Redis token for persistent rate limiting |
